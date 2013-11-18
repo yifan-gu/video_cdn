@@ -7,7 +7,7 @@ typedef struct _Proxy {
   int connfd;
 } Proxy;
 
-int proxy_conn_server(const char * server_ip);
-int proxy_start_listen(const char *local_ip, const char *port);
+int proxy_conn_server(const char *local_ip, const char * server_ip);
+int proxy_start_listen(const char *port);
 
 #endif // for #ifndef _PROXY_H
