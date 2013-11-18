@@ -21,14 +21,4 @@
 # Python
 *.pyc
 
-# OSX
-.DS_Store
-
-# Latex
-*.aux
-*.dvi
-*.log
-*.pdf
-*.ps
-
 *.orig
