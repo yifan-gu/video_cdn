@@ -7,6 +7,7 @@
 
 #include <logger.h>
 #include <proxy.h>
+#include <run_proxy.h>
 
 #define SERVER_PORT 8080
 
@@ -20,6 +21,7 @@ int main(int argc, char const* argv[])
     }
 
     proxy.alpha = atof(argv[2]);
+    proxy.clientfd = 0;
 
     logger(LOG_INFO, "Connecting to video server...");
     if( proxy_conn_server(argv[4], argv[7]) < 0) {
@@ -31,6 +33,7 @@ int main(int argc, char const* argv[])
         return 0;
     }
 
+    run_proxy();
     return 0;
 }
 

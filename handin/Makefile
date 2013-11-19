@@ -8,10 +8,10 @@ CC 		= gcc
 CFLAGS  = -I$(IDIR) -Wall -Werror
 LDFLAGS	= 
 
-_HEADERS = proxy.h logger.h
+_HEADERS = proxy.h logger.h run_proxy.h
 HEADERS = $(patsubst %,$(IDIR)/%,$(_HEADERS))
 
-_OBJS = proxy.o logger.o
+_OBJS = proxy.o logger.o run_proxy.o
 OBJS = $(patsubst %,$(ODIR)/%,$(_OBJS))
 
 _TEST_OBJS   = 

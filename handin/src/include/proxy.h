@@ -7,6 +7,8 @@ typedef struct _Proxy {
   float alpha;
   int listenfd;
   int connfd;
+  int clientfd;
+  int maxfd;
 } Proxy;
 
 int proxy_conn_server(const char *local_ip, const char * server_ip);
