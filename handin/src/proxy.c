@@ -64,7 +64,7 @@ static int parse_bitrates() {
         if(ptr == NULL)
             continue;
         if(sscanf(ptr, "bitrate=\"%d", &rate) == 1){
-            proxy.bitrates[count] = rate;
+            proxy.bps[count] = rate;
             count++;
         }
     }
@@ -79,14 +79,14 @@ static int parse_bitrates() {
     // sort
     for (i = 0; i < count - 1; i++) {
         for (j = i + 1; j < count; j++) {
-            if(proxy.bitrates[i] > proxy.bitrates[j]){
-                SWAP(proxy.bitrates[i], proxy.bitrates[j]);
+            if(proxy.bps[i] > proxy.bps[j]){
+                SWAP(proxy.bps[i], proxy.bps[j]);
             }
         }
-        logger(LOG_INFO, "bitrate %d: %d", i+1, proxy.bitrates[i]);
+        logger(LOG_INFO, "bitrate %d: %d", i+1, proxy.bps[i]);
     }
 
-    proxy.bitrates_len = count;
+    proxy.bps_len = count;
     return 0;
 }
 

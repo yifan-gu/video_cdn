@@ -13,8 +13,8 @@ typedef struct _Proxy {
   int listenfd;
   int maxfd;
 
-  int bitrates[BITRATE_MAXNUM];
-  int bitrates_len;
+  int bps[BITRATE_MAXNUM];
+  int bps_len;
 
   Client client;
   Server server;

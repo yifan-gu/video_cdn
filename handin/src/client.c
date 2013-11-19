@@ -7,20 +7,36 @@
 #include <util.h>
 #include <proxy.h>
 
-#define BUF_SIZE 8192
 
 extern Proxy proxy;
 
-int init_client(Client *cli){
+int init_client(Client *cli) {
     cli->state = REQ_LINE;
     cli->fd = 0;
+    cli->buf_num = 0;
     return 0;
 }
 
-int handle_client(){
+int handle_client() {
     int n;
-    char buf[BUF_SIZE];
-    n = recv(proxy.client.fd, buf, BUF_SIZE, 0);
-    send(proxy.server.fd, buf, n, 0);
-  return 0;
+
+    n = recv(proxy.client.fd, proxy.client.buf, CLIBUF_SIZE, 0);
+    send(proxy.server.fd, proxy.client.buf, n, 0);
+
+    switch(proxy.client.state) {
+    case REQ_LINE:
+        n = recv( proxy.client.fd,
+                  &proxy.client.buf[proxy.client.buf_num],
+                  1,
+                  0);
+        if(n > 0){
+            proxy.client.buf_num ++;
+            if( str_endwith(proxy.client.buf, proxy.client.buf_num, "\r\n", 2) ){
+            }
+        }
+        break;
+    case REQ_DONE:
+        break;
+    }
+    return 0;
 }
