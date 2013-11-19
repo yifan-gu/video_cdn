@@ -20,6 +20,7 @@ int main(int argc, char const* argv[])
         return 0;
     }
 
+    // init proxy {
     proxy.alpha = atof(argv[2]);
     proxy.clientfd = 0;
 
@@ -32,6 +33,7 @@ int main(int argc, char const* argv[])
     if( proxy_start_listen(argv[3]) < 0 ) {
         return 0;
     }
+    // }
 
     run_proxy();
     return 0;
@@ -62,6 +64,8 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
                server_ip, SERVER_PORT);
         return -1;
     }
+
+    // download vod/big_buck_bunny.f4m
 
     logger(LOG_INFO, "Connected video server successfully: %s:%d",
            server_ip, SERVER_PORT);
