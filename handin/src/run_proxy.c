@@ -18,13 +18,15 @@ void run_proxy() {
     int nfds;
     fd_set readfds;
 
-    proxy.maxfd = MAX(proxy.listenfd, proxy.connfd);
+    proxy.maxfd = MAX(proxy.listenfd, proxy.server.fd);
+    init_client(&proxy.client);
+    init_server(&proxy.server);
 
     while(1) {
         FD_SET(proxy.listenfd, &readfds);
-        FD_SET(proxy.connfd, &readfds);
-        if(proxy.clientfd){
-            FD_SET(proxy.clientfd, &readfds);
+        FD_SET(proxy.server.fd, &readfds);
+        if(proxy.client.fd){
+            FD_SET(proxy.client.fd, &readfds);
         }
         // select
         nfds = select(
@@ -33,14 +35,14 @@ void run_proxy() {
                    NULL, NULL, NULL );
         if(nfds > 0) {
             if(FD_ISSET(proxy.listenfd, &readfds)){
-                proxy.clientfd = accept(proxy.listenfd, NULL, 0);
-                proxy.maxfd = MAX(proxy.maxfd, proxy.clientfd);
+                proxy.client.fd = accept(proxy.listenfd, NULL, 0);
+                proxy.maxfd = MAX(proxy.maxfd, proxy.client.fd);
             }
 
-            if(FD_ISSET(proxy.clientfd, &readfds)){
+            if(FD_ISSET(proxy.client.fd, &readfds)){
                 handle_client();
             }
-            if(FD_ISSET(proxy.connfd, &readfds)){
+            if(FD_ISSET(proxy.server.fd, &readfds)){
                 handle_server();
             }
         }

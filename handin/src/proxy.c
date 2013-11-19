@@ -1,15 +1,23 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <errno.h>
 
 #include <logger.h>
 #include <proxy.h>
 #include <run_proxy.h>
+#include <util.h>
 
 #define SERVER_PORT 8080
+#define BUNNY_FILE "big_buck_bunny.f4m"
+
+const char *GET_BUNNY = "GET /vod/big_buck_bunny.f4m HTTP/1.1\r\n"
+                        "Host: 127.0.0.1\r\n"
+                        "\r\n";
 
 Proxy proxy;
 
@@ -20,36 +28,118 @@ int main(int argc, char const* argv[])
         return 0;
     }
 
-    // init proxy {
     proxy.alpha = atof(argv[2]);
-    proxy.clientfd = 0;
 
     logger(LOG_INFO, "Connecting to video server...");
     if( proxy_conn_server(argv[4], argv[7]) < 0) {
         return 0;
     }
 
-    logger(LOG_INFO, "Proxy starts listening");
     if( proxy_start_listen(argv[3]) < 0 ) {
         return 0;
     }
-    // }
+    logger(LOG_INFO, "Proxy starts listening on port: %s", argv[3]);
 
     run_proxy();
+    return 0;
+}
+
+/*
+@reference:
+  getline, http://man7.org/linux/man-pages/man3/getline.3.html
+ */
+static int parse_bitrates() {
+    int read;
+    FILE *fp;
+    int rate;
+    char *line = NULL;
+    size_t len = 0;
+    int count = 0;
+    char *ptr;
+    int i,j;
+
+    fp = fopen(BUNNY_FILE, "r");
+    while ((read = getline(&line, &len, fp)) != -1) {
+        ptr = strstr(line, "bitrate=\"");
+        if(ptr == NULL)
+            continue;
+        if(sscanf(ptr, "bitrate=\"%d", &rate) == 1){
+            proxy.bitrates[count] = rate;
+            count++;
+        }
+    }
+    free(line);
+    fclose(fp);
+
+    if(count == 0){
+        logger(LOG_WARN, "No bit rate parsed!");
+        return -1;
+    }
+
+    // sort
+    for (i = 0; i < count - 1; i++) {
+        for (j = i + 1; j < count; j++) {
+            if(proxy.bitrates[i] > proxy.bitrates[j]){
+                SWAP(proxy.bitrates[i], proxy.bitrates[j]);
+            }
+        }
+        logger(LOG_INFO, "bitrate %d: %d", i+1, proxy.bitrates[i]);
+    }
+
+    proxy.bitrates_len = count;
+    return 0;
+}
+
+static int download_bunny() {
+
+#ifdef NEED_DOWNLOAD_BUNNY
+    int n;
+    FILE *fp;
+    char buf[4096];
+
+    fp = fopen(BUNNY_FILE, "w");
+    if(!fp) {
+        return -1;
+    }
+
+    send(proxy.connfd, GET_BUNNY, strlen(GET_BUNNY), 0);
+
+    while(1) {
+        n = read(proxy.connfd, buf, 4096);
+        if(n < 0) {
+            if(errno != EINTR) {
+                logger(LOG_ERROR, "Failed: Can't download bunny file:\n");
+                return -1;
+            }
+        }
+        else if (n == 0) {
+            break;
+        }
+        else {
+            fwrite(buf,1, n, fp);
+        }
+    }
+    fclose(fp);
+#endif
+
+    if(parse_bitrates() < 0) {
+        return -1;
+    }
+
     return 0;
 }
 
 int proxy_conn_server(const char *local_ip, const char * server_ip) {
     struct sockaddr_in myaddr, toaddr;
 
-    proxy.connfd = socket(AF_INET, SOCK_STREAM, 0);
+    proxy.server.fd = socket(AF_INET, SOCK_STREAM, 0);
 
     bzero(&myaddr, sizeof(myaddr));
     myaddr.sin_family = AF_INET;
     inet_aton(local_ip, &myaddr.sin_addr);
     myaddr.sin_port = htons(0); // random port
 
-    if( bind(proxy.connfd, (struct sockaddr *) &myaddr, sizeof(myaddr)) < 0) {
+    if( bind(proxy.server.fd, (struct sockaddr *) &myaddr, sizeof(myaddr)) < 0) {
         logger(LOG_ERROR, "Failed: Can't bind to local ip: %s",
                local_ip);
         return -1;
@@ -58,7 +148,7 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
     inet_aton(server_ip, &toaddr.sin_addr);
     toaddr.sin_port = htons(SERVER_PORT);
     toaddr.sin_family = AF_INET;
-    if( connect(proxy.connfd, (struct sockaddr *)&toaddr, sizeof(toaddr)) < 0)
+    if( connect(proxy.server.fd, (struct sockaddr *)&toaddr, sizeof(toaddr)) < 0)
     {
         logger(LOG_ERROR, "Failed: Can't connect to server: %s:%d",
                server_ip, SERVER_PORT);
@@ -66,6 +156,9 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
     }
 
     // download vod/big_buck_bunny.f4m
+    if( download_bunny() < 0) {
+        return -1;
+    }
 
     logger(LOG_INFO, "Connected video server successfully: %s:%d",
            server_ip, SERVER_PORT);
