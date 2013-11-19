@@ -68,7 +68,7 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
 int proxy_start_listen(const char *port) {
     int optval;
     struct sockaddr_in addr;
-    
+
     /* create socket */
     proxy.listenfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (proxy.listenfd < 0) {
@@ -80,10 +80,10 @@ int proxy_start_listen(const char *port) {
     /* set up addr */
     memset(&addr, 0, sizeof(struct sockaddr_in));
     addr.sin_family = AF_INET;
-    addr.sin_port = htons(proxy.listenfd);
+    addr.sin_port = htons(atoi(port));
     addr.sin_addr.s_addr = INADDR_ANY;
-    
-    if (bind(proxy.listenfd, (struct sockaddr *)&addr, sizeof(addr) < 0)) {
+
+    if (bind(proxy.listenfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
         logger(LOG_ERROR, "bind() failed");
         perror("");
         return -1;
