@@ -1,6 +1,8 @@
 #ifndef _PROXY_H
 #define _PROXY_H
 
+#define MAX_CONN 1024
+
 typedef struct _Proxy {
   float alpha;
   int listenfd;
