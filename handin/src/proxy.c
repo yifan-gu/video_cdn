@@ -39,7 +39,7 @@ int main(int argc, char const* argv[])
         return -1;
     }
     logger(LOG_INFO, "Proxy starts listening on port: %s", argv[3]);
-
+    
     run_proxy();
     return 0;
 }
@@ -166,7 +166,6 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
 }
 
 int proxy_start_listen(const char *port) {
-    int optval;
     struct sockaddr_in addr;
 
     /* create socket */
@@ -175,7 +174,6 @@ int proxy_start_listen(const char *port) {
         logger(LOG_ERROR, "socket() failed");
         return -1;
     }
-    setsockopt(proxy.listenfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 
     /* set up addr */
     memset(&addr, 0, sizeof(struct sockaddr_in));
@@ -197,3 +195,13 @@ int proxy_start_listen(const char *port) {
     return 0;
 }
 
+int dump_proxy_info(Proxy *p) {
+    fprintf(stdout, "------------|\n");
+    fprintf(stdout, "| alpha: %4f|\n", p->alpha);
+    fprintf(stdout, "| ts: %ld|\n", p->ts);
+    fprintf(stdout, "| tput: %4d|\n", p->tput);
+    fprintf(stdout, "| server_state: %d\n", p->server.state);
+    fprintf(stdout, "-------------\n");
+
+    return 0;
+}
