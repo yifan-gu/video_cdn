@@ -30,7 +30,7 @@ typedef struct _Proxy {
     int segnum;
     int bitrate;
     char chunkname[STR_LEN];
-    unsigned int delta;
+    unsigned long delta;
 
     FILE *log;
 } Proxy;

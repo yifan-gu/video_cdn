@@ -251,7 +251,7 @@ int init_activity_log(Proxy *p, const char *file) {
 
 int write_activity_log(Proxy *p) {
     fprintf(p->log, "%lu %f %d %d %d %s %dSeg%d-Frag%d\n",
-            p->ts / 1000,
+            get_timestamp_now() / 1000,
             (float)(1.0*p->delta/1000),
             (int)(p->tput),
             (int)(p->avg_tput),

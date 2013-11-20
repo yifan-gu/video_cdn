@@ -17,7 +17,7 @@ extern Proxy proxy;
  * update the throughput
  */
 static int update_tput(Proxy *p, int len) {
-    static unsigned int old_delta;
+    static unsigned long old_delta;
     p->delta = get_timestamp_now() - p->ts;
     
     if (p->delta < 1) { // avoid inf and too small delta
@@ -36,8 +36,10 @@ static int update_tput(Proxy *p, int len) {
     // Throughput Kbps
     p->tput = (float)len*8 / (float)p->delta; // from milliseconds to seconds, B to KBp
     //printf("tput %f, avg_tput %f, delta %d len %d\n", p->tput, p->avg_tput, p->delta, len);
-    write_activity_log(&proxy);
     p->avg_tput = p->alpha * p->tput + (1 - p->alpha) * p->avg_tput;
+
+    write_activity_log(&proxy);
+    proxy.client.get_chunk = 0;
 
     old_delta = p->delta;
     
@@ -132,7 +134,9 @@ int handle_server(){
         }
         
         if (already_len == content_len) {
-            update_tput(&proxy, content_len);
+            if(proxy.client.get_chunk){
+                update_tput(&proxy, content_len);
+            }
             s->state = SRV_ST_FINISH;
             already_len = 0;
         }

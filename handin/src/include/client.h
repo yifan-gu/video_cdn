@@ -20,6 +20,8 @@ typedef struct _Client {
 
     char buf[CLIBUF_SIZE];
     int buf_num;
+
+    int get_chunk;
 } Client;
 
 int init_client(Client *cli);

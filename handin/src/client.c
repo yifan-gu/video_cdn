@@ -53,7 +53,9 @@ int handle_client() {
                 if(proxy.client.buf_num == 2){
                     // finished sending one http request
                     proxy.client.state = REQ_LINE;
-                    proxy.ts = get_timestamp_now(); // update timestamp
+                    if(proxy.client.get_chunk){
+                        proxy.ts = get_timestamp_now(); // update timestamp
+                    }
                 }
                 proxy.client.buf_num = 0;
             }

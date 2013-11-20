@@ -24,13 +24,9 @@ int str_endwith(char *src, int src_len, char *dst, int dst_len){
 
 int get_bitrate(){
     int i;
-    int rate = (int) (proxy.avg_tput / 1.5);
-    for (i = proxy.bps_len - 1; i >= 0; i -- ) {
-        if(proxy.bps[i] <= rate)
+    for (i = proxy.bps_len - 1; i > 0; i -- ) {
+        if(proxy.bps[i]*1.5 < proxy.avg_tput)
             break;
-    }
-    if( i < 0){
-        i = 0;
     }
     return proxy.bps[i];
 }
@@ -50,6 +46,7 @@ int parse_reqline(char *buf,int *buf_num){
         proxy.bitrate = get_bitrate();
         proxy.segnum = segnum;
         proxy.fragnum = fragnum;
+        proxy.client.get_chunk = 1;
         sprintf(buf, "GET /vod/%dSeg%d-Frag%d HTTP/1.1\r\n", proxy.bitrate, segnum, fragnum);
         *buf_num = strlen(buf);
     }
