@@ -38,23 +38,26 @@ void run_proxy() {
                    NULL, NULL, NULL );
         if(nfds > 0) {
             if(FD_ISSET(proxy.listenfd, &readfds)){
-                //logger(LOG_DEBUG, "accept");
                 if (SRV_ST_FINISH == proxy.server.state) {
-                    close(proxy.client.fd); // release client fd
-                    //logger(LOG_DEBUG, "close fd");
+                    if(proxy.client.fd){
+                        close(proxy.client.fd); // release client fd
+                    }
                     proxy.server.state = SRV_ST_STLINE;
                 }
-                
+
                 proxy.client.fd = accept(proxy.listenfd, NULL, 0);
                 proxy.maxfd = MAX(proxy.maxfd, proxy.client.fd);
             }
 
             if( FD_ISSET(proxy.client.fd, &readfds) ){
-                proxy.ts = get_timestamp_now(); // update timestamp
                 handle_client();
             }
             if( FD_ISSET(proxy.server.fd, &readfds) ){
                 handle_server();
+                if(proxy.server.closed){
+                    // we can't do anything without the server
+                    while(proxy_reconnect_server() < 0);
+                }
             }
         }
     }

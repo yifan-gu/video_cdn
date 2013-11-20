@@ -23,8 +23,6 @@ Proxy proxy;
 
 int main(int argc, char const* argv[])
 {
-    // TODO check argc
-    
     if( init_log(NULL) < 0 ) {
         printf("Failed: Can't init logging\n");
         return 0;
@@ -47,7 +45,7 @@ int main(int argc, char const* argv[])
         return -1;
     }
     logger(LOG_INFO, "Proxy starts listening on port: %s", argv[3]);
-    
+
     run_proxy();
     return 0;
 }
@@ -71,10 +69,10 @@ static int parse_bitrates() {
         ptr = strstr(line, "bitrate=\"");
         if(ptr == NULL)
             continue;
-        if(sscanf(ptr, "bitrate=\"%d", &rate) == 1){
+        if(sscanf(ptr, "bitrate=\"%d", &rate) == 1) {
             proxy.bps[count] = rate;
             count++;
-            if(count == BITRATE_MAXNUM){
+            if(count == BITRATE_MAXNUM) {
                 break;
             }
         }
@@ -82,7 +80,7 @@ static int parse_bitrates() {
     free(line);
     fclose(fp);
 
-    if(count == 0){
+    if(count == 0) {
         logger(LOG_WARN, "No bit rate parsed!");
         return -1;
     }
@@ -90,7 +88,7 @@ static int parse_bitrates() {
     // sort
     for (i = 0; i < count; i++) {
         for (j = i + 1; j < count; j++) {
-            if(proxy.bps[i] > proxy.bps[j]){
+            if(proxy.bps[i] > proxy.bps[j]) {
                 SWAP(proxy.bps[i], proxy.bps[j]);
             }
         }
@@ -159,7 +157,8 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
     inet_aton(server_ip, &toaddr.sin_addr);
     toaddr.sin_port = htons(SERVER_PORT);
     toaddr.sin_family = AF_INET;
-    if( connect(proxy.server.fd, (struct sockaddr *)&toaddr, sizeof(toaddr)) < 0)
+    if( connect(proxy.server.fd,
+                (struct sockaddr *)(& toaddr), sizeof(toaddr)) < 0)
     {
         logger(LOG_ERROR, "Failed: Can't connect to server: %s:%d",
                server_ip, SERVER_PORT);
@@ -171,8 +170,27 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
         return -1;
     }
 
+    proxy.myaddr = myaddr;
+    proxy.toaddr = toaddr;
     logger(LOG_INFO, "Connected video server successfully: %s:%d",
            server_ip, SERVER_PORT);
+    return 0;
+}
+
+int proxy_reconnect_server(){
+    close(proxy.server.fd);
+    proxy.server.fd = socket(AF_INET, SOCK_STREAM, 0);
+    if( bind(proxy.server.fd, (struct sockaddr *)(&proxy.myaddr), sizeof(proxy.myaddr)) < 0) {
+        logger(LOG_ERROR, "Failed: reconnect can't bind to local addr");
+        return -1;
+    }
+    if( connect(proxy.server.fd,
+                (struct sockaddr *)(& proxy.toaddr), sizeof(proxy.toaddr)) < 0)
+    {
+        logger(LOG_ERROR, "Failed: reconnect can't reconnect to server");
+        return -1;
+    }
+    proxy.server.closed = 0;
     return 0;
 }
 

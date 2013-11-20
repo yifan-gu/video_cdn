@@ -48,6 +48,7 @@ static int parse_length(char *begin) {
 }
 
 int init_server(Server *srv){
+    srv->closed = 0;
     return 0;
 }
 
@@ -70,8 +71,8 @@ int handle_server(){
     //logger(LOG_DEBUG, "already len: %d, content len: %d", already_len, content_len);
     //logger(LOG_DEBUG, "fd: %d %d %d", proxy.listenfd, s->fd, c->fd);
     if (n == 0) {
-        logger(LOG_DEBUG, "connection close");
-        s->close = 1;
+        logger(LOG_DEBUG, "server connection close");
+        s->closed = 1;
         return n;
     }
 

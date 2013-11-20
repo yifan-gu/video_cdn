@@ -51,7 +51,9 @@ int handle_client() {
             if( str_endwith(proxy.client.buf, proxy.client.buf_num, "\r\n", 2) ){
                 send(proxy.server.fd, proxy.client.buf, proxy.client.buf_num, 0);
                 if(proxy.client.buf_num == 2){
-                    init_client(&proxy.client);
+                    // finished sending one http request
+                    proxy.client.state = REQ_LINE;
+                    proxy.ts = get_timestamp_now(); // update timestamp
                 }
                 proxy.client.buf_num = 0;
             }
@@ -59,6 +61,7 @@ int handle_client() {
         else if(n == 0){
             // close connection
             proxy.client.fd = 0;
+            close(proxy.client.fd); // release client fd
             proxy.maxfd = MAX(proxy.listenfd, proxy.server.fd);
         }
         break;
