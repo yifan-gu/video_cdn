@@ -7,6 +7,7 @@ enum server_st {
     SRV_ST_STLINE,
     SRV_ST_HEADER,
     SRV_ST_BODY,
+    SRV_ST_FINISH
 };
     
 typedef struct _Server{

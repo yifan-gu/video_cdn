@@ -23,12 +23,20 @@ Proxy proxy;
 
 int main(int argc, char const* argv[])
 {
+    // TODO check argc
+    
     if( init_log(NULL) < 0 ) {
         printf("Failed: Can't init logging\n");
         return 0;
     }
 
     proxy.alpha = atof(argv[2]);
+    proxy.avg_tput  = 512;
+    proxy.fp = fopen(argv[1], "w+");
+    if (NULL == proxy.fp) {
+        logger(LOG_ERROR, "fopen() failed");
+        return -1;
+    }
 
     logger(LOG_INFO, "Connecting to video server...");
     if( proxy_conn_server(argv[4], argv[7]) < 0) {
@@ -66,6 +74,9 @@ static int parse_bitrates() {
         if(sscanf(ptr, "bitrate=\"%d", &rate) == 1){
             proxy.bps[count] = rate;
             count++;
+            if(count == BITRATE_MAXNUM){
+                break;
+            }
         }
     }
     free(line);
@@ -165,6 +176,8 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
     return 0;
 }
 
+#define MAX_CONN 1024
+
 int proxy_start_listen(const char *port) {
     struct sockaddr_in addr;
 
@@ -195,13 +208,20 @@ int proxy_start_listen(const char *port) {
     return 0;
 }
 
+/* for debugging */
 int dump_proxy_info(Proxy *p) {
     fprintf(stdout, "------------|\n");
-    fprintf(stdout, "| alpha: %4f|\n", p->alpha);
+    fprintf(stdout, "| alpha: %.3f|\n", p->alpha);
     fprintf(stdout, "| ts: %ld|\n", p->ts);
-    fprintf(stdout, "| tput: %4d|\n", p->tput);
+    fprintf(stdout, "| tput: %f|\n", p->tput);
+    fprintf(stdout, "| avg_tput: %f|\n", p->avg_tput);
     fprintf(stdout, "| server_state: %d\n", p->server.state);
     fprintf(stdout, "-------------\n");
 
     return 0;
 }
+
+/*int write_log(Proxy *p) {
+    fprintf(p->fp, "%lu %.3f %d %d %d %s %s\n", );
+    fflush(p->fp);
+    }*/

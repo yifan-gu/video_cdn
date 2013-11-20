@@ -1,17 +1,16 @@
 #ifndef _PROXY_H
 #define _PROXY_H
 
-#define MAX_CONN 1024
 #define BITRATE_MAXNUM 1024
 
 #include <client.h>
 #include <server.h>
-
-#define UPDATE_TPUT(p, len)                                             \
-    ((p)->alpha * (float)(len) / (time(NULL) - (p)->ts) + (1 - (p)->alpha) * (p)->tput)
+#include <time.h>
 
 typedef struct _Proxy {
     float alpha;
+    float avg_tput;
+    float tput;
 
     int listenfd;
     int maxfd;
@@ -22,8 +21,8 @@ typedef struct _Proxy {
     Client client;
     Server server;
 
-    time_t ts;
-    int tput;
+    unsigned long ts;
+    FILE *fp;
 } Proxy;
 
 int proxy_conn_server(const char *local_ip, const char * server_ip);

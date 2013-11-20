@@ -1,6 +1,18 @@
 #include <stdio.h>
 #include <string.h>
 #include <util.h>
+#include <proxy.h>
+#include <sys/time.h>
+
+#include "logger.h"
+
+extern Proxy proxy;
+
+unsigned long get_timestamp_now(void) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (tv.tv_sec * 1000) + (tv.tv_usec / 1000); // convert to milliseconds
+}
 
 int str_endwith(char *src, int src_len, char *dst, int dst_len){
     if(src_len < dst_len)
@@ -8,6 +20,19 @@ int str_endwith(char *src, int src_len, char *dst, int dst_len){
     if(strncmp(&src[src_len - dst_len], dst, dst_len) != 0)
         return 0;
     return 1;
+}
+
+int get_bitrate(){
+    int i;
+    int rate = (int) (1.5 * proxy.avg_tput);
+    for (i = proxy.bps_len - 1; i >= 0; i -- ) {
+        if(proxy.bps[i] <= rate)
+            break;
+    }
+    if( i < 0){
+        i = 0;
+    }
+    return proxy.bps[i];
 }
 
 int parse_reqline(char *buf,int *buf_num){
@@ -22,9 +47,40 @@ int parse_reqline(char *buf,int *buf_num){
     }
     else if(sscanf(buf, "GET /vod/%dSeg%d-Frag%d", &bitrate, &seqnum, &fragnum) == 3){
         // update bitrate to desired bitrate
-        bitrate = 100;
-        sprintf(buf, "GET /vod/%dSeg%d-Frag%d HTTP/1.1\r\n", bitrate, seqnum, fragnum);
+        sprintf(buf, "GET /vod/%dSeg%d-Frag%d HTTP/1.1\r\n", get_bitrate(), seqnum, fragnum);
         *buf_num = strlen(buf);
     }
     return 0;
+}
+
+/**
+ * change keep-alive to close if found.
+ * @param buf, the recv buffer
+ * @param recvlen, the recvlen
+ * @return the modified recvlen, because strlen("Close") is shorter...
+ */
+int change_connection(char *buf, int recvlen) {
+    const char *connection = "Connection:";
+    const char *keepalive = " Keep-Alive\r\n"; // some times, they have white space after colon
+    const char *conclose = " Close\r\n";
+
+    char *ptr;
+
+    if ((ptr = strstr(buf, connection)) != NULL) {
+        ptr += strlen(connection);
+        
+        if ((ptr - buf + strlen(keepalive)) > recvlen) {
+            logger(LOG_WARN, "Header size too long %d", ptr-buf);
+        } else {
+            strncpy(ptr, conclose, strlen(conclose));
+            memmove(ptr + strlen(conclose),
+                    ptr + strlen(keepalive),
+                    recvlen - (ptr + strlen(keepalive) - buf));
+
+            // logger(LOG_DEBUG, "recvlen %d, after %d", recvlen, recvlen - (strlen(keepalive) - strlen(conclose)));
+            return recvlen - (strlen(keepalive) - strlen(conclose));
+        }
+    }
+    
+    return recvlen;
 }
