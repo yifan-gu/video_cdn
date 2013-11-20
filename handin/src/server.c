@@ -22,9 +22,9 @@ static int update_tput(Proxy *p, int len) {
         delta = 1;
     }
 
-    //TODO bps or Bps??
-    p->tput = (float)len / ((float)delta / 1000); // from milliseconds to seconds
-    printf("p->tput %f, delta %d len %d\n", p->tput, delta, len);
+    // Throughput Kbps
+    p->tput = (float)len*8 / (float)delta; // from milliseconds to seconds, B to KBp
+    //printf("tput %f, avg_tput %f, delta %d len %d\n", p->tput, p->avg_tput, delta, len);
     p->avg_tput = p->alpha * p->tput + (1 - p->alpha) * p->avg_tput;
 
     return 0;
