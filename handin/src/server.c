@@ -17,16 +17,30 @@ extern Proxy proxy;
  * update the throughput
  */
 static int update_tput(Proxy *p, int len) {
-    unsigned int delta = get_timestamp_now() - p->ts;
-    if (0 == delta) { // avoid inf
-        delta = 1;
+    static unsigned int old_delta;
+    p->delta = get_timestamp_now() - p->ts;
+    
+    if (p->delta < 1) { // avoid inf and too small delta
+        p->delta = 10;
+    }
+
+    if (0 == old_delta) {
+        old_delta = p->delta;
+    }
+
+    if (old_delta > 10 * p->delta) {
+        old_delta = p->delta;
+        return 0; // try to avoid jitter
     }
 
     // Throughput Kbps
-    p->tput = (float)len*8 / (float)delta; // from milliseconds to seconds, B to KBp
-    //printf("tput %f, avg_tput %f, delta %d len %d\n", p->tput, p->avg_tput, delta, len);
+    p->tput = (float)len*8 / (float)p->delta; // from milliseconds to seconds, B to KBp
+    //printf("tput %f, avg_tput %f, delta %d len %d\n", p->tput, p->avg_tput, p->delta, len);
+    write_activity_log(&proxy);
     p->avg_tput = p->alpha * p->tput + (1 - p->alpha) * p->avg_tput;
 
+    old_delta = p->delta;
+    
     return 0;
 }
 

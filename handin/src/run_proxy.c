@@ -45,7 +45,8 @@ void run_proxy() {
                     proxy.server.state = SRV_ST_STLINE;
                 }
 
-                proxy.client.fd = accept(proxy.listenfd, NULL, 0);
+                proxy.client.fd = accept(proxy.listenfd, (struct sockaddr *) &proxy.client.addr,
+                                         &proxy.client.addrlen);
                 proxy.maxfd = MAX(proxy.maxfd, proxy.client.fd);
             }
 

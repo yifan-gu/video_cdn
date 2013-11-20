@@ -1,6 +1,10 @@
 #ifndef _CLIENT_H
 #define _CLIENT_H
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+
 #define CLIBUF_SIZE 8192
 
 enum CLI_STATE {
@@ -11,6 +15,8 @@ enum CLI_STATE {
 typedef struct _Client {
     enum CLI_STATE state;
     int fd;
+    struct sockaddr_in addr;
+    socklen_t addrlen;
 
     char buf[CLIBUF_SIZE];
     int buf_num;
