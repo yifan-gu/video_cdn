@@ -15,6 +15,7 @@ typedef struct _Server{
     int fd;
 
     char buf[SRVBUF_SIZE];
+    int close;
     //int buf_num;
 } Server;
 

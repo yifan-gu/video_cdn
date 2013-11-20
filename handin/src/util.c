@@ -64,21 +64,25 @@ int change_connection(char *buf, int recvlen) {
     const char *keepalive = " Keep-Alive\r\n"; // some times, they have white space after colon
     const char *conclose = " Close\r\n";
 
-    char *ptr;
+    char *ptr, *tail;
 
+    tail = strstr(buf, "\r\n\r\n");
+    
     if ((ptr = strstr(buf, connection)) != NULL) {
-        ptr += strlen(connection);
-        
-        if ((ptr - buf + strlen(keepalive)) > recvlen) {
-            logger(LOG_WARN, "Header size too long %d", ptr-buf);
-        } else {
-            strncpy(ptr, conclose, strlen(conclose));
-            memmove(ptr + strlen(conclose),
-                    ptr + strlen(keepalive),
-                    recvlen - (ptr + strlen(keepalive) - buf));
+        if (NULL == tail || ptr < tail) { // make sure the "Connection:" is in the header
+            
+            ptr += strlen(connection);
+            if ((ptr - buf + strlen(keepalive)) > recvlen) {
+                logger(LOG_WARN, "Header size too long %d", ptr-buf);
+            } else {
+                strncpy(ptr, conclose, strlen(conclose));
+                memmove(ptr + strlen(conclose),
+                        ptr + strlen(keepalive),
+                        recvlen - (ptr + strlen(keepalive) - buf));
 
-            // logger(LOG_DEBUG, "recvlen %d, after %d", recvlen, recvlen - (strlen(keepalive) - strlen(conclose)));
-            return recvlen - (strlen(keepalive) - strlen(conclose));
+                // logger(LOG_DEBUG, "recvlen %d, after %d", recvlen, recvlen - (strlen(keepalive) - strlen(conclose)));
+                return recvlen - (strlen(keepalive) - strlen(conclose));
+            }
         }
     }
     
