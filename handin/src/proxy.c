@@ -240,8 +240,8 @@ int dump_proxy_info(Proxy *p) {
  * activity log
  */
 int init_activity_log(Proxy *p, const char *file) {
-    p->fp = fopen(file, "w+");
-    if (NULL == p->fp) {
+    p->log = fopen(file, "w+");
+    if (NULL == p->log) {
         logger(LOG_ERROR, "cannot open activity log");
         return -1;
     }
@@ -250,16 +250,16 @@ int init_activity_log(Proxy *p, const char *file) {
 }
 
 int write_activity_log(Proxy *p) {
-    fprintf(p->fp, "%lu %u %d %d %d %s %dSeg%d-Frag%d\n",
+    fprintf(p->log, "%lu %f %d %d %d %s %dSeg%d-Frag%d\n",
             p->ts / 1000,
-            p->delta,
+            (float)(1.0*p->delta/1000),
             (int)(p->tput),
             (int)(p->avg_tput),
             p->bitrate,
             inet_ntoa(p->client.addr.sin_addr),
             p->bitrate, p->segnum, p->fragnum);
     
-    fflush(p->fp);
+    fflush(p->log);
 
     return 0;
 }

@@ -31,7 +31,8 @@ typedef struct _Proxy {
     int bitrate;
     char chunkname[STR_LEN];
     unsigned int delta;
-    FILE *fp;
+
+    FILE *log;
 } Proxy;
 
 int proxy_conn_server(const char *local_ip, const char * server_ip);

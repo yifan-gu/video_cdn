@@ -58,6 +58,7 @@ void run_proxy() {
                 if(proxy.server.closed){
                     // we can't do anything without the server
                     while(proxy_reconnect_server() < 0);
+                    logger(LOG_DEBUG, "server reconnect successfully.");
                 }
             }
         }
