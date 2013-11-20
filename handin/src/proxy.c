@@ -29,6 +29,7 @@ int main(int argc, char const* argv[])
     }
 
     proxy.alpha = atof(argv[2]);
+    proxy.tput = proxy.avg_tput  = 512;
 
     logger(LOG_INFO, "Connecting to video server...");
     if( proxy_conn_server(argv[4], argv[7]) < 0) {
@@ -66,6 +67,9 @@ static int parse_bitrates() {
         if(sscanf(ptr, "bitrate=\"%d", &rate) == 1){
             proxy.bps[count] = rate;
             count++;
+            if(count == BITRATE_MAXNUM){
+                break;
+            }
         }
     }
     free(line);
@@ -164,6 +168,8 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
            server_ip, SERVER_PORT);
     return 0;
 }
+
+#define MAX_CONN 1024
 
 int proxy_start_listen(const char *port) {
     int optval;
