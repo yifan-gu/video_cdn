@@ -36,7 +36,7 @@ int main(int argc, char const* argv[])
     }
 
     if( proxy_start_listen(argv[3]) < 0 ) {
-        return 0;
+        return -1;
     }
     logger(LOG_INFO, "Proxy starts listening on port: %s", argv[3]);
 
@@ -77,7 +77,7 @@ static int parse_bitrates() {
     }
 
     // sort
-    for (i = 0; i < count - 1; i++) {
+    for (i = 0; i < count; i++) {
         for (j = i + 1; j < count; j++) {
             if(proxy.bps[i] > proxy.bps[j]){
                 SWAP(proxy.bps[i], proxy.bps[j]);

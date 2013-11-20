@@ -19,10 +19,12 @@ void run_proxy() {
     fd_set readfds;
 
     proxy.maxfd = MAX(proxy.listenfd, proxy.server.fd);
+    proxy.client.fd = 0;
     init_client(&proxy.client);
     init_server(&proxy.server);
 
     while(1) {
+        FD_ZERO(&readfds);
         FD_SET(proxy.listenfd, &readfds);
         FD_SET(proxy.server.fd, &readfds);
         if(proxy.client.fd){
@@ -39,10 +41,10 @@ void run_proxy() {
                 proxy.maxfd = MAX(proxy.maxfd, proxy.client.fd);
             }
 
-            if(FD_ISSET(proxy.client.fd, &readfds)){
+            if( FD_ISSET(proxy.client.fd, &readfds) ){
                 handle_client();
             }
-            if(FD_ISSET(proxy.server.fd, &readfds)){
+            if( FD_ISSET(proxy.server.fd, &readfds) ){
                 handle_server();
             }
         }
