@@ -71,6 +71,7 @@ int handle_server(){
     //logger(LOG_DEBUG, "fd: %d %d %d", proxy.listenfd, s->fd, c->fd);
     if (n == 0) {
         logger(LOG_DEBUG, "connection close");
+        s->close = 1;
         return n;
     }
 
@@ -124,11 +125,11 @@ int handle_server(){
         break;
     }
         
-    if (send(c->fd, s->buf, n, 0) < 0) {
+    if ((n = send(c->fd, s->buf, n, 0) < 0)) {
         logger(LOG_ERROR, "send() failed");
         return -1;
     };
 
     //logger(LOG_DEBUG, "%s", s->buf);
-    return 0;
+    return n;
 }
