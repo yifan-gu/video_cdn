@@ -30,9 +30,9 @@ int handle_client() {
         if(n > 0){
             proxy.client.buf_num ++;
             if( str_endwith(proxy.client.buf, proxy.client.buf_num, "\r\n", 2) ){
-                //logger(LOG_DEBUG, "Before parse: %s", proxy.client.buf);
+                /*logger(LOG_DEBUG, "Before parse: %s", proxy.client.buf);*/
                 parse_reqline(proxy.client.buf, &proxy.client.buf_num);
-                //logger(LOG_DEBUG, "After parse:  %s", proxy.client.buf);
+                /*logger(LOG_DEBUG, "After parse:  %s", proxy.client.buf);*/
 
                 proxy.client.state = REQ_DONE;
                 send(proxy.server.fd, proxy.client.buf, proxy.client.buf_num, 0);

@@ -31,7 +31,7 @@ int main(int argc, char const* argv[])
     }
 
     proxy.alpha = atof(argv[2]);
-    proxy.avg_tput  = 512;
+    proxy.tput = proxy.avg_tput  = 512;
     proxy.fp = fopen(argv[1], "w+");
     if (NULL == proxy.fp) {
         logger(LOG_ERROR, "fopen() failed");
