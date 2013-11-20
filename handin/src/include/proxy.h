@@ -1,7 +1,6 @@
 #ifndef _PROXY_H
 #define _PROXY_H
 
-#define MAX_CONN 1024
 #define BITRATE_MAXNUM 1024
 
 #include <client.h>
@@ -9,6 +8,8 @@
 
 typedef struct _Proxy {
   float alpha;
+  float avg_tput;
+  float tput;
 
   int listenfd;
   int maxfd;

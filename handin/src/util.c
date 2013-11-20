@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <util.h>
+#include <proxy.h>
+
+extern Proxy proxy;
 
 int str_endwith(char *src, int src_len, char *dst, int dst_len){
     if(src_len < dst_len)
@@ -8,6 +11,19 @@ int str_endwith(char *src, int src_len, char *dst, int dst_len){
     if(strncmp(&src[src_len - dst_len], dst, dst_len) != 0)
         return 0;
     return 1;
+}
+
+int get_bitrate(){
+    int i;
+    int rate = (int) (1.5 * proxy.avg_tput);
+    for (i = proxy.bps_len - 1; i >= 0; i -- ) {
+        if(proxy.bps[i] <= rate)
+            break;
+    }
+    if( i < 0){
+        i = 0;
+    }
+    return proxy.bps[i];
 }
 
 int parse_reqline(char *buf,int *buf_num){
@@ -22,8 +38,7 @@ int parse_reqline(char *buf,int *buf_num){
     }
     else if(sscanf(buf, "GET /vod/%dSeg%d-Frag%d", &bitrate, &seqnum, &fragnum) == 3){
         // update bitrate to desired bitrate
-        bitrate = 100;
-        sprintf(buf, "GET /vod/%dSeg%d-Frag%d HTTP/1.1\r\n", bitrate, seqnum, fragnum);
+        sprintf(buf, "GET /vod/%dSeg%d-Frag%d HTTP/1.1\r\n", get_bitrate(), seqnum, fragnum);
         *buf_num = strlen(buf);
     }
     return 0;
