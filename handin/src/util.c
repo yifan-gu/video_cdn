@@ -24,7 +24,7 @@ int str_endwith(char *src, int src_len, char *dst, int dst_len){
 
 int get_bitrate(){
     int i;
-    int rate = (int) (1.5 * proxy.avg_tput);
+    int rate = (int) (proxy.avg_tput / 1.5);
     for (i = proxy.bps_len - 1; i >= 0; i -- ) {
         if(proxy.bps[i] <= rate)
             break;
@@ -37,7 +37,7 @@ int get_bitrate(){
 
 int parse_reqline(char *buf,int *buf_num){
     int bitrate;
-    int seqnum;
+    int segnum;
     int fragnum;
 
     buf[*buf_num] = '\0'; // we're assuming the request line length is less than 4096
@@ -45,9 +45,12 @@ int parse_reqline(char *buf,int *buf_num){
         sprintf(buf, "GET /vod/big_buck_bunny_nolist.f4m HTTP/1.1\r\n");
         *buf_num = strlen(buf);
     }
-    else if(sscanf(buf, "GET /vod/%dSeg%d-Frag%d", &bitrate, &seqnum, &fragnum) == 3){
+    else if(sscanf(buf, "GET /vod/%dSeg%d-Frag%d", &bitrate, &segnum, &fragnum) == 3){
         // update bitrate to desired bitrate
-        sprintf(buf, "GET /vod/%dSeg%d-Frag%d HTTP/1.1\r\n", get_bitrate(), seqnum, fragnum);
+        proxy.bitrate = get_bitrate();
+        proxy.segnum = segnum;
+        proxy.fragnum = fragnum;
+        sprintf(buf, "GET /vod/%dSeg%d-Frag%d HTTP/1.1\r\n", proxy.bitrate, segnum, fragnum);
         *buf_num = strlen(buf);
     }
     return 0;

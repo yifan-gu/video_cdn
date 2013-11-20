@@ -7,6 +7,7 @@
 #include <time.h>
 
 #define BITRATE_MAXNUM 1024
+#define STR_LEN 256
 
 typedef struct _Proxy {
     float alpha;
@@ -25,11 +26,19 @@ typedef struct _Proxy {
     Server server;
 
     unsigned long ts;
+    int fragnum;
+    int segnum;
+    int bitrate;
+    char chunkname[STR_LEN];
+    unsigned int delta;
     FILE *fp;
 } Proxy;
 
 int proxy_conn_server(const char *local_ip, const char * server_ip);
 int proxy_reconnect_server();
 int proxy_start_listen(const char *port);
+
+int init_activity_log(Proxy *p, const char *file);
+int write_activity_log(Proxy *p);
 int dump_proxy_info(Proxy *p);
 #endif // for #ifndef _PROXY_H

@@ -27,14 +27,11 @@ int main(int argc, char const* argv[])
         printf("Failed: Can't init logging\n");
         return 0;
     }
-
+    
     proxy.alpha = atof(argv[2]);
     proxy.tput = proxy.avg_tput  = 512;
-    proxy.fp = fopen(argv[1], "w+");
-    if (NULL == proxy.fp) {
-        logger(LOG_ERROR, "fopen() failed");
-        return -1;
-    }
+    
+    init_activity_log(&proxy, argv[1]);
 
     logger(LOG_INFO, "Connecting to video server...");
     if( proxy_conn_server(argv[4], argv[7]) < 0) {
@@ -239,7 +236,30 @@ int dump_proxy_info(Proxy *p) {
     return 0;
 }
 
-/*int write_log(Proxy *p) {
-    fprintf(p->fp, "%lu %.3f %d %d %d %s %s\n", );
+/**
+ * activity log
+ */
+int init_activity_log(Proxy *p, const char *file) {
+    p->fp = fopen(file, "w+");
+    if (NULL == p->fp) {
+        logger(LOG_ERROR, "cannot open activity log");
+        return -1;
+    }
+
+    return 0;
+}
+
+int write_activity_log(Proxy *p) {
+    fprintf(p->fp, "%lu %u %d %d %d %s %dSeg%d-Frag%d\n",
+            p->ts / 1000,
+            p->delta,
+            (int)(p->tput),
+            (int)(p->avg_tput),
+            p->bitrate,
+            inet_ntoa(p->client.addr.sin_addr),
+            p->bitrate, p->segnum, p->fragnum);
+    
     fflush(p->fp);
-    }*/
+
+    return 0;
+}
