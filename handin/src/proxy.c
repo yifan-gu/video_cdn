@@ -23,6 +23,8 @@ Proxy proxy;
 
 int main(int argc, char const* argv[])
 {
+    // TODO check argc
+    
     if( init_log(NULL) < 0 ) {
         printf("Failed: Can't init logging\n");
         return 0;
@@ -30,6 +32,11 @@ int main(int argc, char const* argv[])
 
     proxy.alpha = atof(argv[2]);
     proxy.tput = proxy.avg_tput  = 512;
+    proxy.fp = fopen(argv[1], "w+");
+    if (NULL == proxy.fp) {
+        logger(LOG_ERROR, "fopen() failed");
+        return -1;
+    }
 
     logger(LOG_INFO, "Connecting to video server...");
     if( proxy_conn_server(argv[4], argv[7]) < 0) {
@@ -40,7 +47,7 @@ int main(int argc, char const* argv[])
         return -1;
     }
     logger(LOG_INFO, "Proxy starts listening on port: %s", argv[3]);
-
+    
     run_proxy();
     return 0;
 }
@@ -172,7 +179,6 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
 #define MAX_CONN 1024
 
 int proxy_start_listen(const char *port) {
-    int optval;
     struct sockaddr_in addr;
 
     /* create socket */
@@ -181,7 +187,6 @@ int proxy_start_listen(const char *port) {
         logger(LOG_ERROR, "socket() failed");
         return -1;
     }
-    setsockopt(proxy.listenfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 
     /* set up addr */
     memset(&addr, 0, sizeof(struct sockaddr_in));
@@ -203,3 +208,20 @@ int proxy_start_listen(const char *port) {
     return 0;
 }
 
+/* for debugging */
+int dump_proxy_info(Proxy *p) {
+    fprintf(stdout, "------------|\n");
+    fprintf(stdout, "| alpha: %.3f|\n", p->alpha);
+    fprintf(stdout, "| ts: %ld|\n", p->ts);
+    fprintf(stdout, "| tput: %f|\n", p->tput);
+    fprintf(stdout, "| avg_tput: %f|\n", p->avg_tput);
+    fprintf(stdout, "| server_state: %d\n", p->server.state);
+    fprintf(stdout, "-------------\n");
+
+    return 0;
+}
+
+/*int write_log(Proxy *p) {
+    fprintf(p->fp, "%lu %.3f %d %d %d %s %s\n", );
+    fflush(p->fp);
+    }*/
