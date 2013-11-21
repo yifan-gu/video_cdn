@@ -2,6 +2,7 @@
 #define _SERVER_H
 
 #define SRVBUF_SIZE 8192
+#define SPEEDUP_THRESHOLD 5
 
 enum server_st {
     SRV_ST_STLINE,

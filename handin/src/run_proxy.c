@@ -39,9 +39,6 @@ void run_proxy() {
         if(nfds > 0) {
             if(FD_ISSET(proxy.listenfd, &readfds)){
                 if (SRV_ST_FINISH == proxy.server.state) {
-                    if(proxy.client.fd){
-                        close(proxy.client.fd); // release client fd
-                    }
                     proxy.server.state = SRV_ST_STLINE;
                 }
 

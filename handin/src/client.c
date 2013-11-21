@@ -41,8 +41,8 @@ int handle_client() {
         }
         else if(n == 0){
             // close connection
-            proxy.client.fd = 0;
             close(proxy.client.fd); // release client fd
+            proxy.client.fd = 0;
             proxy.maxfd = MAX(proxy.listenfd, proxy.server.fd);
         }
         break;
@@ -68,8 +68,8 @@ int handle_client() {
         }
         else if(n == 0){
             // close connection
-            proxy.client.fd = 0;
             close(proxy.client.fd); // release client fd
+            proxy.client.fd = 0;
             proxy.maxfd = MAX(proxy.listenfd, proxy.server.fd);
         }
         break;
