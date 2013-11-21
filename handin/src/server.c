@@ -28,7 +28,7 @@ static int update_tput(Proxy *p, int len) {
         old_delta = p->delta;
     }
 
-    if (old_delta > 10 * p->delta) {
+    if (p->delta < old_delta / 2) {
         old_delta = p->delta;
         return 0; // try to avoid jitter
     }
