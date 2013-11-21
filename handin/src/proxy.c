@@ -98,7 +98,7 @@ static int parse_bitrates() {
 
 static int download_bunny() {
 
-#ifdef NEED_DOWNLOAD_BUNNY
+/*#ifdef NEED_DOWNLOAD_BUNNY*/
     int n;
     FILE *fp;
     char buf[4096];
@@ -108,10 +108,10 @@ static int download_bunny() {
         return -1;
     }
 
-    send(proxy.connfd, GET_BUNNY, strlen(GET_BUNNY), 0);
+    send(proxy.server.fd, GET_BUNNY, strlen(GET_BUNNY), 0);
 
     while(1) {
-        n = read(proxy.connfd, buf, 4096);
+        n = read(proxy.server.fd, buf, 4096);
         if(n < 0) {
             if(errno != EINTR) {
                 logger(LOG_ERROR, "Failed: Can't download bunny file:\n");
@@ -126,7 +126,7 @@ static int download_bunny() {
         }
     }
     fclose(fp);
-#endif
+/*#endif*/
 
     if(parse_bitrates() < 0) {
         return -1;

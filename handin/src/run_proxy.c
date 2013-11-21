@@ -48,6 +48,8 @@ void run_proxy() {
                 proxy.client.fd = accept(proxy.listenfd, (struct sockaddr *) &proxy.client.addr,
                                          &proxy.client.addrlen);
                 proxy.maxfd = MAX(proxy.maxfd, proxy.client.fd);
+                proxy.client.state = REQ_LINE;
+                proxy.client.buf_num = 0;
             }
 
             if( FD_ISSET(proxy.client.fd, &readfds) ){
@@ -57,7 +59,9 @@ void run_proxy() {
                 handle_server();
                 if(proxy.server.closed){
                     // we can't do anything without the server
-                    while(proxy_reconnect_server() < 0);
+                    while(proxy_reconnect_server() < 0){
+                        sleep(5);
+                    }
                     logger(LOG_DEBUG, "server reconnect successfully.");
                 }
             }

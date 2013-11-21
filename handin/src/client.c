@@ -39,6 +39,12 @@ int handle_client() {
                 proxy.client.buf_num = 0;
             }
         }
+        else if(n == 0){
+            // close connection
+            proxy.client.fd = 0;
+            close(proxy.client.fd); // release client fd
+            proxy.maxfd = MAX(proxy.listenfd, proxy.server.fd);
+        }
         break;
 
     case REQ_DONE:
