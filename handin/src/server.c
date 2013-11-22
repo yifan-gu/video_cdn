@@ -136,7 +136,10 @@ int handle_server(){
     case SRV_ST_BODY:
         if (content_len == 0) {
             logger(LOG_WARN, "no Content-Length found");
+            /*s->state = SRV_ST_STLINE;*/
             s->state = SRV_ST_STLINE;
+            already_len = 0;
+            s->closed = 1;
             break;
         }
         
@@ -150,8 +153,9 @@ int handle_server(){
             if(proxy.client.get_chunk){
                 update_tput(&proxy, content_len);
             }
-            s->state = SRV_ST_FINISH;
+            s->state = SRV_ST_STLINE;
             already_len = 0;
+            s->closed = 1;
         }
     default:
         break;
