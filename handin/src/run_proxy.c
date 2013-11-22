@@ -40,12 +40,19 @@ void run_proxy() {
                    NULL, NULL, NULL );
         if(nfds > 0) {
             if(FD_ISSET(proxy.listenfd, &readfds)){
+                if(proxy.server.fd)
+                    close(proxy.server.fd);
+                if(proxy.client.fd)
+                    close(proxy.client.fd);
+
                 /*logger(LOG_DEBUG, "accept new client");*/
                 proxy.client.fd = accept(proxy.listenfd, (struct sockaddr *) &proxy.client.addr,
                                          &proxy.client.addrlen);
-                proxy_reconnect_server();
-                logger(LOG_DEBUG, "server reconnect successfully.");
+                if( ! proxy.server.fd)
+                    proxy_reconnect_server();
+                /*logger(LOG_DEBUG, "server reconnect successfully.");*/
 
+                proxy.maxfd = proxy.listenfd;
                 proxy.maxfd = MAX(proxy.maxfd, proxy.client.fd);
                 proxy.client.state = REQ_LINE;
 
