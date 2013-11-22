@@ -98,7 +98,7 @@ static int parse_bitrates() {
 
 static int download_bunny() {
 
-/*#ifdef NEED_DOWNLOAD_BUNNY*/
+#ifdef NEED_DOWNLOAD_BUNNY
     int n;
     FILE *fp;
     char buf[4096];
@@ -126,7 +126,7 @@ static int download_bunny() {
         }
     }
     fclose(fp);
-/*#endif*/
+#endif
 
     if(parse_bitrates() < 0) {
         return -1;
@@ -175,7 +175,6 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
 }
 
 int proxy_reconnect_server(){
-    close(proxy.server.fd);
     proxy.server.fd = socket(AF_INET, SOCK_STREAM, 0);
     if( bind(proxy.server.fd, (struct sockaddr *)(&proxy.myaddr), sizeof(proxy.myaddr)) < 0) {
         logger(LOG_ERROR, "Failed: reconnect can't bind to local addr");

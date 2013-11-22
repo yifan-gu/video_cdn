@@ -2,7 +2,7 @@
 #define _SERVER_H
 
 #define SRVBUF_SIZE 8192
-#define SPEEDUP_THRESHOLD 5
+#define SPEEDUP_THRESHOLD 3
 
 enum server_st {
     SRV_ST_STLINE,
@@ -17,6 +17,7 @@ typedef struct _Server{
 
     char buf[SRVBUF_SIZE];
     int closed;
+    int conn_close;
     //int buf_num;
 } Server;
 

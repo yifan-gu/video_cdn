@@ -115,9 +115,13 @@ int handle_server(){
         }
         
     case SRV_ST_HEADER:
-        n = change_connection(s->buf, n);
+        /*n = change_connection(s->buf, n);*/
+        /*if(strstr(st_tail + 2, "Connection: close")){*/
+            /*s->conn_close = 1;*/
+        /*}*/
         content_len = parse_length(st_tail+strlen("\r\n"));
         if ((hdr_tail = strstr(st_tail+strlen("\r\n"), "\r\n\r\n")) != NULL) {
+        /*if ((hdr_tail = strstr(st_tail+strlen("\r\n"), "\r\n")) != NULL) {*/
             //debug
             //memset(tmp, 0, 8192);
             //strncpy(tmp, st_tail+strlen("\r\n"), hdr_tail - st_tail - strlen("\r\n"));
@@ -153,6 +157,9 @@ int handle_server(){
         break;
     }
         
+    if(! c->fd)
+        return -1;
+
     if ((n = send(c->fd, s->buf, n, 0) < 0)) {
         logger(LOG_ERROR, "send() failed");
         return -1;

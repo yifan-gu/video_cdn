@@ -39,12 +39,13 @@ int handle_client() {
                 proxy.client.buf_num = 0;
             }
         }
-        else if(n == 0){
-            // close connection
-            close(proxy.client.fd); // release client fd
-            proxy.client.fd = 0;
-            proxy.maxfd = MAX(proxy.listenfd, proxy.server.fd);
-        }
+        /*else if(n == 0){*/
+            /*// close connection*/
+            /*logger(LOG_DEBUG, "close connection");*/
+            /*close(proxy.client.fd); // release client fd*/
+            /*proxy.client.fd = 0;*/
+            /*proxy.maxfd = MAX(proxy.listenfd, proxy.server.fd);*/
+        /*}*/
         break;
 
     case REQ_DONE:
@@ -55,6 +56,12 @@ int handle_client() {
         if(n > 0){
             proxy.client.buf_num ++;
             if( str_endwith(proxy.client.buf, proxy.client.buf_num, "\r\n", 2) ){
+                proxy.client.buf[proxy.client.buf_num] = '\0';
+                if(proxy.client.get_chunk &&
+                  strstr(proxy.client.buf, "Connection")){
+                    sprintf(proxy.client.buf, "Connection: close\r\n");
+                    proxy.client.buf_num = strlen(proxy.client.buf);
+                }
                 send(proxy.server.fd, proxy.client.buf, proxy.client.buf_num, 0);
                 if(proxy.client.buf_num == 2){
                     // finished sending one http request
@@ -66,12 +73,13 @@ int handle_client() {
                 proxy.client.buf_num = 0;
             }
         }
-        else if(n == 0){
-            // close connection
-            close(proxy.client.fd); // release client fd
-            proxy.client.fd = 0;
-            proxy.maxfd = MAX(proxy.listenfd, proxy.server.fd);
-        }
+        /*else if(n == 0){*/
+            /*// close connection*/
+            /*logger(LOG_DEBUG, "close connection");*/
+            /*close(proxy.client.fd); // release client fd*/
+            /*proxy.client.fd = 0;*/
+            /*proxy.maxfd = MAX(proxy.listenfd, proxy.server.fd);*/
+        /*}*/
         break;
     }
     return 0;

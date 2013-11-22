@@ -27,7 +27,9 @@ void run_proxy() {
     while(1) {
         FD_ZERO(&readfds);
         FD_SET(proxy.listenfd, &readfds);
-        FD_SET(proxy.server.fd, &readfds);
+        if(proxy.server.fd){
+            FD_SET(proxy.server.fd, &readfds);
+        }
         if(proxy.client.fd){
             FD_SET(proxy.client.fd, &readfds);
         }
@@ -38,31 +40,33 @@ void run_proxy() {
                    NULL, NULL, NULL );
         if(nfds > 0) {
             if(FD_ISSET(proxy.listenfd, &readfds)){
-                if (SRV_ST_FINISH == proxy.server.state) {
-                    proxy.server.state = SRV_ST_STLINE;
-                }
-
-                if(proxy.client.fd){
-                    close(proxy.client.fd); // release client fd
-                }
+                /*logger(LOG_DEBUG, "accept new client");*/
                 proxy.client.fd = accept(proxy.listenfd, (struct sockaddr *) &proxy.client.addr,
                                          &proxy.client.addrlen);
+                proxy_reconnect_server();
+                logger(LOG_DEBUG, "server reconnect successfully.");
+
                 proxy.maxfd = MAX(proxy.maxfd, proxy.client.fd);
                 proxy.client.state = REQ_LINE;
+
+                proxy.maxfd = MAX(proxy.maxfd, proxy.server.fd);
+                proxy.server.state = SRV_ST_STLINE;
+
                 proxy.client.buf_num = 0;
             }
 
-            if( FD_ISSET(proxy.client.fd, &readfds) ){
+            if( proxy.client.fd && FD_ISSET(proxy.client.fd, &readfds) ){
                 handle_client();
             }
-            if( FD_ISSET(proxy.server.fd, &readfds) ){
+            if( proxy.server.fd && FD_ISSET(proxy.server.fd, &readfds) ){
                 handle_server();
                 if(proxy.server.closed){
+                    close(proxy.server.fd);
+                    close(proxy.client.fd); // release client fd
+                    proxy.client.fd = 0;
+                    proxy.server.fd = 0;
+                    proxy.maxfd = proxy.listenfd;
                     // we can't do anything without the server
-                    while(proxy_reconnect_server() < 0){
-                        /*sleep(5);*/
-                    }
-                    logger(LOG_DEBUG, "server reconnect successfully.");
                 }
             }
         }
