@@ -45,10 +45,14 @@ void run_proxy() {
                                          &proxy.client.addrlen);
                 /*logger(LOG_DEBUG, "server reconnect successfully.");*/
 
-                proxy.maxfd = proxy.listenfd;
                 proxy.maxfd = MAX(proxy.maxfd, proxy.client.fd);
                 proxy.client.state = REQ_LINE;
                 proxy.client.buf_num = 0;
+
+                if(proxy.server.fd){
+                    proxy.maxfd = MAX(proxy.listenfd, proxy.client.fd);
+                    proxy_reconnect_server();
+                }
             }
 
             if( proxy.client.fd && FD_ISSET(proxy.client.fd, &readfds) ){
@@ -64,8 +68,6 @@ void run_proxy() {
                     proxy.maxfd = proxy.listenfd;
                     // we can't do anything without the server
                     proxy_reconnect_server();
-                    proxy.maxfd = MAX(proxy.maxfd, proxy.server.fd);
-                    proxy.server.state = SRV_ST_STLINE;
                 }
             }
         }

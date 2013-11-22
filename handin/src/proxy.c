@@ -145,6 +145,7 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
     inet_aton(local_ip, &myaddr.sin_addr);
     myaddr.sin_port = htons(0); // random port
 
+    /*bind(proxy.server.fd, (struct sockaddr *) &myaddr, sizeof(myaddr));*/
     if( bind(proxy.server.fd, (struct sockaddr *) &myaddr, sizeof(myaddr)) < 0) {
         logger(LOG_ERROR, "Failed: Can't bind to local ip: %s",
                local_ip);
@@ -180,6 +181,7 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
 }
 
 int proxy_reconnect_server(){
+
     proxy.server.fd = socket(AF_INET, SOCK_STREAM, 0);
     if( bind(proxy.server.fd, (struct sockaddr *)(&proxy.myaddr), sizeof(proxy.myaddr)) < 0) {
         logger(LOG_ERROR, "Failed: reconnect can't bind to local addr");
@@ -191,6 +193,9 @@ int proxy_reconnect_server(){
         logger(LOG_ERROR, "Failed: reconnect can't reconnect to server");
         return -1;
     }
+
+    proxy.maxfd = MAX(proxy.maxfd, proxy.server.fd);
+    proxy.server.state = SRV_ST_STLINE;
     proxy.server.closed = 0;
     return 0;
 }
@@ -201,7 +206,7 @@ int proxy_start_listen(const char *port) {
     struct sockaddr_in addr;
 
     /* create socket */
-    proxy.listenfd = socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    proxy.listenfd = socket(AF_INET, SOCK_STREAM, 0);
     if (proxy.listenfd < 0) {
         logger(LOG_ERROR, "socket() failed");
         return -1;
@@ -213,11 +218,13 @@ int proxy_start_listen(const char *port) {
     addr.sin_port = htons(atoi(port));
     addr.sin_addr.s_addr = INADDR_ANY;
 
-    if (bind(proxy.listenfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-        logger(LOG_ERROR, "bind() failed");
-        perror("");
-        return -1;
-    }
+    /*bind(proxy.listenfd, (struct sockaddr *)&addr, sizeof(addr));*/
+    while(bind(proxy.listenfd, (struct sockaddr *)&addr, sizeof(addr)) < 0);
+    /*if (bind(proxy.listenfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {*/
+        /*logger(LOG_ERROR, "bind() failed");*/
+        /*perror("");*/
+        /*return -1;*/
+    /*}*/
 
     if (listen(proxy.listenfd, MAX_CONN) < 0) {
         logger(LOG_ERROR, "listen() failed");
