@@ -51,89 +51,89 @@ int main(int argc, char const* argv[])
 @reference:
   getline, http://man7.org/linux/man-pages/man3/getline.3.html
  */
-/*static int parse_bitrates() {*/
-    /*int read;*/
-    /*FILE *fp;*/
-    /*int rate;*/
-    /*char *line = NULL;*/
-    /*size_t len = 0;*/
-    /*int count = 0;*/
-    /*char *ptr;*/
-    /*int i,j;*/
+static int parse_bitrates() {
+    int read;
+    FILE *fp;
+    int rate;
+    char *line = NULL;
+    size_t len = 0;
+    int count = 0;
+    char *ptr;
+    int i,j;
 
-    /*fp = fopen(BUNNY_FILE, "r");*/
-    /*while ((read = getline(&line, &len, fp)) != -1) {*/
-        /*ptr = strstr(line, "bitrate=\"");*/
-        /*if(ptr == NULL)*/
-            /*continue;*/
-        /*if(sscanf(ptr, "bitrate=\"%d", &rate) == 1) {*/
-            /*proxy.bps[count] = rate;*/
-            /*count++;*/
-            /*if(count == BITRATE_MAXNUM) {*/
-                /*break;*/
-            /*}*/
-        /*}*/
-    /*}*/
-    /*free(line);*/
-    /*fclose(fp);*/
+    fp = fopen(BUNNY_FILE, "r");
+    while ((read = getline(&line, &len, fp)) != -1) {
+        ptr = strstr(line, "bitrate=\"");
+        if(ptr == NULL)
+            continue;
+        if(sscanf(ptr, "bitrate=\"%d", &rate) == 1) {
+            proxy.bps[count] = rate;
+            count++;
+            if(count == BITRATE_MAXNUM) {
+                break;
+            }
+        }
+    }
+    free(line);
+    fclose(fp);
 
-    /*if(count == 0) {*/
-        /*logger(LOG_WARN, "No bit rate parsed!");*/
-        /*return -1;*/
-    /*}*/
+    if(count == 0) {
+        logger(LOG_WARN, "No bit rate parsed!");
+        return -1;
+    }
 
-    /*// sort*/
-    /*for (i = 0; i < count; i++) {*/
-        /*for (j = i + 1; j < count; j++) {*/
-            /*if(proxy.bps[i] > proxy.bps[j]) {*/
-                /*SWAP(proxy.bps[i], proxy.bps[j]);*/
-            /*}*/
-        /*}*/
-        /*logger(LOG_INFO, "bitrate %d: %d", i+1, proxy.bps[i]);*/
-    /*}*/
+    // sort
+    for (i = 0; i < count; i++) {
+        for (j = i + 1; j < count; j++) {
+            if(proxy.bps[i] > proxy.bps[j]) {
+                SWAP(proxy.bps[i], proxy.bps[j]);
+            }
+        }
+        logger(LOG_INFO, "bitrate %d: %d", i+1, proxy.bps[i]);
+    }
 
-    /*proxy.bps_len = count;*/
-    /*return 0;*/
-/*}*/
+    proxy.bps_len = count;
+    return 0;
+}
 
-/*static int download_bunny() {*/
+static int download_bunny() {
 
 /*#ifdef NEED_DOWNLOAD_BUNNY*/
-    /*int n;*/
-    /*FILE *fp;*/
-    /*char buf[4096];*/
+    int n;
+    FILE *fp;
+    char buf[4096];
 
-    /*fp = fopen(BUNNY_FILE, "w");*/
-    /*if(!fp) {*/
-        /*return -1;*/
-    /*}*/
+    fp = fopen(BUNNY_FILE, "w");
+    if(!fp) {
+        return -1;
+    }
 
-    /*send(proxy.server.fd, GET_BUNNY, strlen(GET_BUNNY), 0);*/
+    send(proxy.server.fd, GET_BUNNY, strlen(GET_BUNNY), 0);
 
-    /*while(1) {*/
-        /*n = read(proxy.server.fd, buf, 4096);*/
-        /*if(n < 0) {*/
-            /*if(errno != EINTR) {*/
-                /*logger(LOG_ERROR, "Failed: Can't download bunny file:\n");*/
-                /*return -1;*/
-            /*}*/
-        /*}*/
-        /*else if (n == 0) {*/
-            /*break;*/
-        /*}*/
-        /*else {*/
-            /*fwrite(buf,1, n, fp);*/
-        /*}*/
-    /*}*/
-    /*fclose(fp);*/
+    while(1) {
+        n = read(proxy.server.fd, buf, 4096);
+        if(n < 0) {
+            if(errno != EINTR) {
+                logger(LOG_ERROR, "Failed: Can't download bunny file:\n");
+                return -1;
+            }
+        }
+        else if (n == 0) {
+            break;
+        }
+        else {
+            fwrite(buf,1, n, fp);
+        }
+    }
+    fclose(fp);
 /*#endif*/
 
-    /*if(parse_bitrates() < 0) {*/
-        /*return -1;*/
-    /*}*/
+    if(parse_bitrates() < 0) {
+        return -1;
+    }
 
-    /*return 0;*/
-/*}*/
+    return 0;
+}
 
 int proxy_conn_server(const char *local_ip, const char * server_ip) {
     struct sockaddr_in myaddr, toaddr;
@@ -145,6 +145,8 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
     inet_aton(local_ip, &myaddr.sin_addr);
     myaddr.sin_port = htons(0); // random port
 
+int optval = 1;
+setsockopt(proxy.server.fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval) );
     /*bind(proxy.server.fd, (struct sockaddr *) &myaddr, sizeof(myaddr));*/
     if( bind(proxy.server.fd, (struct sockaddr *) &myaddr, sizeof(myaddr)) < 0) {
         logger(LOG_ERROR, "Failed: Can't bind to local ip: %s",
@@ -163,15 +165,14 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
         return -1;
     }
 
-    // download vod/big_buck_bunny.f4m
-    /*if( download_bunny() < 0) {*/
-        /*return -1;*/
-    /*}*/
-    proxy.bps[0] = 10;
-    proxy.bps[1] = 100;
-    proxy.bps[2] = 500;
-    proxy.bps[3] = 1000;
-    proxy.bps_len = 4;
+    if( download_bunny() < 0) {
+        return -1;
+    }
+    /*proxy.bps[0] = 10;*/
+    /*proxy.bps[1] = 100;*/
+    /*proxy.bps[2] = 500;*/
+    /*proxy.bps[3] = 1000;*/
+    /*proxy.bps_len = 4;*/
 
     proxy.myaddr = myaddr;
     proxy.toaddr = toaddr;
@@ -217,14 +218,15 @@ int proxy_start_listen(const char *port) {
     addr.sin_family = AF_INET;
     addr.sin_port = htons(atoi(port));
     addr.sin_addr.s_addr = INADDR_ANY;
-
+int optval = 1;
+setsockopt(proxy.listenfd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval) );
     /*bind(proxy.listenfd, (struct sockaddr *)&addr, sizeof(addr));*/
-    while(bind(proxy.listenfd, (struct sockaddr *)&addr, sizeof(addr)) < 0);
-    /*if (bind(proxy.listenfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {*/
-        /*logger(LOG_ERROR, "bind() failed");*/
-        /*perror("");*/
-        /*return -1;*/
-    /*}*/
+    /*while(bind(proxy.listenfd, (struct sockaddr *)&addr, sizeof(addr)) < 0);*/
+    if (bind(proxy.listenfd, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+        logger(LOG_ERROR, "bind() failed");
+        perror("");
+        return -1;
+    }
 
     if (listen(proxy.listenfd, MAX_CONN) < 0) {
         logger(LOG_ERROR, "listen() failed");

@@ -149,7 +149,7 @@ int handle_server(){
             already_len += n;
         }
         
-        if (already_len == content_len) {
+        if (already_len >= content_len) {
             if(proxy.client.get_chunk){
                 update_tput(&proxy, content_len);
             }
