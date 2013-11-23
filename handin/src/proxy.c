@@ -15,11 +15,14 @@
 #define SERVER_PORT 8080
 #define BUNNY_FILE "big_buck_bunny.f4m"
 
+
 const char *GET_BUNNY = "GET /vod/big_buck_bunny.f4m HTTP/1.1\r\n"
                         "Host: 127.0.0.1\r\n"
                         "\r\n";
 
 Proxy proxy;
+
+static int download_bunny();
 
 int main(int argc, char const* argv[])
 {
@@ -27,10 +30,10 @@ int main(int argc, char const* argv[])
         printf("Failed: Can't init logging\n");
         return 0;
     }
-    
+
     proxy.alpha = atof(argv[2]);
     proxy.tput = proxy.avg_tput  = 512;
-    
+
     init_activity_log(&proxy, argv[1]);
 
     logger(LOG_INFO, "Connecting to video server...");
@@ -42,6 +45,19 @@ int main(int argc, char const* argv[])
         return -1;
     }
     logger(LOG_INFO, "Proxy starts listening on port: %s", argv[3]);
+
+    if( download_bunny() < 0) {
+        return -1;
+    }
+    /*proxy.bps[0] = 10;*/
+    /*proxy.bps[1] = 100;*/
+    /*proxy.bps[2] = 500;*/
+    /*proxy.bps[3] = 1000;*/
+    /*proxy.bps_len = 4;*/
+
+    if( proxy_conn_server(argv[4], argv[7]) < 0) {
+        return 0;
+    }
 
     run_proxy();
     return 0;
@@ -165,14 +181,6 @@ setsockopt(proxy.server.fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval) );
         return -1;
     }
 
-    if( download_bunny() < 0) {
-        return -1;
-    }
-    /*proxy.bps[0] = 10;*/
-    /*proxy.bps[1] = 100;*/
-    /*proxy.bps[2] = 500;*/
-    /*proxy.bps[3] = 1000;*/
-    /*proxy.bps_len = 4;*/
 
     proxy.myaddr = myaddr;
     proxy.toaddr = toaddr;
@@ -198,6 +206,7 @@ int proxy_reconnect_server(){
     proxy.maxfd = MAX(proxy.maxfd, proxy.server.fd);
     proxy.server.state = SRV_ST_STLINE;
     proxy.server.closed = 0;
+    logger(LOG_DEBUG, "server reconnect successfully.");
     return 0;
 }
 
@@ -271,7 +280,7 @@ int write_activity_log(Proxy *p) {
             p->bitrate,
             inet_ntoa(p->client.addr.sin_addr),
             p->bitrate, p->segnum, p->fragnum);
-    
+
     fflush(p->log);
 
     return 0;

@@ -43,7 +43,6 @@ void run_proxy() {
                 /*logger(LOG_DEBUG, "accept new client");*/
                 proxy.client.fd = accept(proxy.listenfd, (struct sockaddr *) &proxy.client.addr,
                                          &proxy.client.addrlen);
-                /*logger(LOG_DEBUG, "server reconnect successfully.");*/
 
                 proxy.maxfd = MAX(proxy.maxfd, proxy.client.fd);
                 proxy.client.state = REQ_LINE;
@@ -61,6 +60,7 @@ void run_proxy() {
             if( proxy.server.fd && FD_ISSET(proxy.server.fd, &readfds) ){
                 handle_server();
                 if(proxy.server.closed){
+                    logger(LOG_DEBUG, "server connection close");
                     close(proxy.server.fd);
                     close(proxy.client.fd); // release client fd
                     proxy.client.fd = 0;
