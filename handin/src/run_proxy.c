@@ -49,6 +49,7 @@ void run_proxy() {
                 proxy.client.buf_num = 0;
 
                 if(proxy.server.fd){
+                    close(proxy.server.fd);
                     proxy.maxfd = MAX(proxy.listenfd, proxy.client.fd);
                     proxy_reconnect_server();
                 }

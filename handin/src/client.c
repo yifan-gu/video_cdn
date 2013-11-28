@@ -48,6 +48,7 @@ int handle_client() {
         /*}*/
         break;
 
+        // header
     case REQ_DONE:
         n = recv( proxy.client.fd,
                   & proxy.client.buf [proxy.client.buf_num],
