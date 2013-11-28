@@ -5,20 +5,25 @@ TESTDIR    = src/test
 TESTBINDIR = test/bin
 
 CC 		= gcc
-CFLAGS  = -I$(IDIR) -Wall -Werror
+#CFLAGS  = -I$(IDIR) -Wall -Werror
+CFLAGS  = -I$(IDIR) -Wall
 LDFLAGS	= 
 
-_HEADERS = proxy.h logger.h run_proxy.h util.h client.h server.h
+_HEADERS = proxy.h logger.h run_proxy.h util.h client.h server.h mydns.h \
+		   nameserver.h
 HEADERS = $(patsubst %,$(IDIR)/%,$(_HEADERS))
 
-_OBJS = proxy.o logger.o run_proxy.o util.o client.o server.o
+_OBJS = proxy.o logger.o run_proxy.o util.o client.o server.o mydns.o
 OBJS = $(patsubst %,$(ODIR)/%,$(_OBJS))
 
-_TEST_OBJS   = 
+_NS_OBJS = nameserver.o logger.o
+NS_OBJS = $(patsubst %,$(ODIR)/%,$(_NS_OBJS))
+
+_TEST_OBJS = 
 TEST_OBJS = $(patsubst %,$(ODIR)/%,$(_TEST_OBJS))
 
 # Binaries
-BINS = proxy
+BINS = proxy nameserver
 
 TESTBINS = 
 
@@ -29,6 +34,9 @@ test: ${TESTBINS}
 
 proxy: $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $@ $(LDFLAGS)
+
+nameserver: $(NS_OBJS)
+	$(CC) $(CFLAGS) $(NS_OBJS) -o $@ $(LDFLAGS)
 
 $(ODIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
 	$(CC) -c -o $@ $< $(CFLAGS)

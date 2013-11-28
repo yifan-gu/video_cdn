@@ -35,7 +35,8 @@ typedef struct _Proxy {
     FILE *log;
 } Proxy;
 
-int proxy_conn_server(const char *local_ip, const char * server_ip);
+int parse_addr(struct sockaddr_in *addr, const char *ip, int port);
+int proxy_conn_server();
 int proxy_reconnect_server();
 int proxy_start_listen(const char *port);
 
