@@ -24,12 +24,48 @@ Proxy proxy;
 
 static int download_bunny();
 
+static int get_myaddr(const char *ip){
+    bzero(& proxy.myaddr, sizeof(struct sockaddr_in));
+    proxy.myaddr.sin_family = AF_INET;
+    inet_aton(ip, & proxy.myaddr.sin_addr);
+    proxy.myaddr.sin_port = htons(0); // random port
+}
+
+static int get_server_info(char *ip){
+}
+
 int main(int argc, char const* argv[])
 {
+    // argv:
+    //  1. log
+    //  2. alpha
+    //  3. listen port
+    //  4. fake-ip
+    //  5. dns ip
+    //  6. dns port
+    //  7. (optional) server ip
+
+    /*if( init_log(argv[1]) < 0 ) {*/
     if( init_log(NULL) < 0 ) {
         printf("Failed: Can't init logging\n");
         return 0;
     }
+
+    get_myaddr(argv[4]);
+
+    if (argc < 7) {
+        if(dns_server_info(argv[5], argv[6]) < 0){
+            logger(LOG_ERROR, "Failed: DNS query");
+            return -1;
+        }
+    }
+    else{
+        if(get_server_info(argv[7]) ){
+            logger(LOG_ERROR, "Failed: get server info");
+            return -1;
+        }
+    }
+    return 0;
 
     proxy.alpha = atof(argv[2]);
     proxy.tput = proxy.avg_tput  = 512;
@@ -153,6 +189,7 @@ static int download_bunny() {
 
 int proxy_conn_server(const char *local_ip, const char * server_ip) {
     struct sockaddr_in myaddr, toaddr;
+    int optval;
 
     proxy.server.fd = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -161,9 +198,9 @@ int proxy_conn_server(const char *local_ip, const char * server_ip) {
     inet_aton(local_ip, &myaddr.sin_addr);
     myaddr.sin_port = htons(0); // random port
 
-int optval = 1;
-setsockopt(proxy.server.fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval) );
-    /*bind(proxy.server.fd, (struct sockaddr *) &myaddr, sizeof(myaddr));*/
+    optval = 1;
+    setsockopt(proxy.server.fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval) );
+
     if( bind(proxy.server.fd, (struct sockaddr *) &myaddr, sizeof(myaddr)) < 0) {
         logger(LOG_ERROR, "Failed: Can't bind to local ip: %s",
                local_ip);
