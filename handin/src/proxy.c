@@ -11,6 +11,7 @@
 #include <proxy.h>
 #include <run_proxy.h>
 #include <util.h>
+#include <mydns.h>
 
 #define SERVER_PORT 8080
 #define BUNNY_FILE "big_buck_bunny.f4m"
@@ -24,56 +25,49 @@ Proxy proxy;
 
 static int download_bunny();
 
-static int get_myaddr(const char *ip){
-    bzero(& proxy.myaddr, sizeof(struct sockaddr_in));
-    proxy.myaddr.sin_family = AF_INET;
-    inet_aton(ip, & proxy.myaddr.sin_addr);
-    proxy.myaddr.sin_port = htons(0); // random port
-}
-
-static int get_server_info(char *ip){
-}
-
 int main(int argc, char const* argv[])
 {
     // argv:
-    //  1. log
-    //  2. alpha
-    //  3. listen port
-    //  4. fake-ip
-    //  5. dns ip
-    //  6. dns port
-    //  7. (optional) server ip
+    // 1. log
+    // 2. alpha
+    // 3. listen port
+    // 4. fake-ip
+    // 5. dns ip
+    // 6. dns port
+    // 7. (optional) server ip
 
-    /*if( init_log(argv[1]) < 0 ) {*/
+    // system logging
     if( init_log(NULL) < 0 ) {
         printf("Failed: Can't init logging\n");
         return 0;
     }
 
-    get_myaddr(argv[4]);
+    parse_addr(& proxy.myaddr, argv[4], 0); // 0 -- random port
 
     if (argc < 7) {
-        if(dns_server_info(argv[5], argv[6]) < 0){
+        if( init_mydns(argv[5], atoi(argv[6]) ) < 0){
+            logger(LOG_ERROR, "Failed: Init DNS");
+            return -1;
+        }
+        parse_addr(& proxy.toaddr, "0.0.0.0", SERVER_PORT);
+        if(dns_server_info("video.cs.cmu.edu") < 0){
             logger(LOG_ERROR, "Failed: DNS query");
             return -1;
         }
     }
     else{
-        if(get_server_info(argv[7]) ){
-            logger(LOG_ERROR, "Failed: get server info");
-            return -1;
-        }
+        parse_addr(& proxy.toaddr, argv[7], SERVER_PORT);
     }
-    return 0;
+
+    return 0; // for testing DNS
 
     proxy.alpha = atof(argv[2]);
-    proxy.tput = proxy.avg_tput  = 512;
+    proxy.tput = proxy.avg_tput = 512;
 
     init_activity_log(&proxy, argv[1]);
 
     logger(LOG_INFO, "Connecting to video server...");
-    if( proxy_conn_server(argv[4], argv[7]) < 0) {
+    if( proxy_conn_server() < 0) {
         return 0;
     }
 
@@ -82,18 +76,19 @@ int main(int argc, char const* argv[])
     }
     logger(LOG_INFO, "Proxy starts listening on port: %s", argv[3]);
 
-    if( download_bunny() < 0) {
-        return -1;
-    }
-    /*proxy.bps[0] = 10;*/
-    /*proxy.bps[1] = 100;*/
-    /*proxy.bps[2] = 500;*/
-    /*proxy.bps[3] = 1000;*/
-    /*proxy.bps_len = 4;*/
+    /*if( download_bunny() < 0) {*/
+        /*return -1;*/
+    /*}*/
 
-    if( proxy_conn_server(argv[4], argv[7]) < 0) {
-        return 0;
-    }
+    /*if( proxy_conn_server() < 0) {*/
+        /*return 0;*/
+    /*}*/
+
+    proxy.bps[0] = 10;
+    proxy.bps[1] = 100;
+    proxy.bps[2] = 500;
+    proxy.bps[3] = 1000;
+    proxy.bps_len = 4;
 
     run_proxy();
     return 0;
@@ -101,8 +96,8 @@ int main(int argc, char const* argv[])
 
 /*
 @reference:
-  getline, http://man7.org/linux/man-pages/man3/getline.3.html
- */
+getline, http://man7.org/linux/man-pages/man3/getline.3.html
+*/
 static int parse_bitrates() {
     int read;
     FILE *fp;
@@ -149,8 +144,6 @@ static int parse_bitrates() {
 }
 
 static int download_bunny() {
-
-/*#ifdef NEED_DOWNLOAD_BUNNY*/
     int n;
     FILE *fp;
     char buf[4096];
@@ -178,7 +171,6 @@ static int download_bunny() {
         }
     }
     fclose(fp);
-/*#endif*/
 
     if(parse_bitrates() < 0) {
         return -1;
@@ -187,42 +179,35 @@ static int download_bunny() {
     return 0;
 }
 
-int proxy_conn_server(const char *local_ip, const char * server_ip) {
-    struct sockaddr_in myaddr, toaddr;
+int parse_addr(struct sockaddr_in *addr, const char *ip, int port){
+    bzero(addr, sizeof(struct sockaddr_in));
+    addr->sin_family = AF_INET;
+    inet_aton(ip, & addr->sin_addr);
+    addr->sin_port = htons(port);
+    return 0;
+}
+
+int proxy_conn_server() {
     int optval;
 
     proxy.server.fd = socket(AF_INET, SOCK_STREAM, 0);
 
-    bzero(&myaddr, sizeof(myaddr));
-    myaddr.sin_family = AF_INET;
-    inet_aton(local_ip, &myaddr.sin_addr);
-    myaddr.sin_port = htons(0); // random port
-
     optval = 1;
     setsockopt(proxy.server.fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval) );
 
-    if( bind(proxy.server.fd, (struct sockaddr *) &myaddr, sizeof(myaddr)) < 0) {
-        logger(LOG_ERROR, "Failed: Can't bind to local ip: %s",
-               local_ip);
+    if( bind(proxy.server.fd, (struct sockaddr *) &proxy.myaddr, sizeof(proxy.myaddr)) < 0) {
+        logger(LOG_ERROR, "Failed: Can't bind to local ip");
         return -1;
     }
 
-    inet_aton(server_ip, &toaddr.sin_addr);
-    toaddr.sin_port = htons(SERVER_PORT);
-    toaddr.sin_family = AF_INET;
     if( connect(proxy.server.fd,
-                (struct sockaddr *)(& toaddr), sizeof(toaddr)) < 0)
+                (struct sockaddr *)(& proxy.toaddr), sizeof(proxy.toaddr)) < 0)
     {
-        logger(LOG_ERROR, "Failed: Can't connect to server: %s:%d",
-               server_ip, SERVER_PORT);
+        logger(LOG_ERROR, "Failed: Can't connect to video server");
         return -1;
     }
 
-
-    proxy.myaddr = myaddr;
-    proxy.toaddr = toaddr;
-    logger(LOG_INFO, "Connected video server successfully: %s:%d",
-           server_ip, SERVER_PORT);
+    logger(LOG_INFO, "Connected video server successfully");
     return 0;
 }
 
@@ -296,8 +281,8 @@ int dump_proxy_info(Proxy *p) {
 }
 
 /**
- * activity log
- */
+* activity log
+*/
 int init_activity_log(Proxy *p, const char *file) {
     p->log = fopen(file, "w+");
     if (NULL == p->log) {
