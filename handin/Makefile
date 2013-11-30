@@ -1,12 +1,13 @@
 IDIR       = src/include
 ODIR       = src/obj
 SRCDIR     = src
-TESTDIR    = src/test
+TESTDIR    = test
+TESTODIR    = test/obj
 TESTBINDIR = test/bin
 
 CC 		= gcc
 #CFLAGS  = -I$(IDIR) -Wall -Werror
-CFLAGS  = -I$(IDIR) -Wall
+CFLAGS  = -I$(IDIR) -Wall -g
 LDFLAGS	= 
 
 _HEADERS = proxy.h logger.h run_proxy.h util.h client.h server.h mydns.h \
@@ -19,13 +20,13 @@ OBJS = $(patsubst %,$(ODIR)/%,$(_OBJS))
 _NS_OBJS = nameserver.o logger.o
 NS_OBJS = $(patsubst %,$(ODIR)/%,$(_NS_OBJS))
 
-_TEST_OBJS = 
-TEST_OBJS = $(patsubst %,$(ODIR)/%,$(_TEST_OBJS))
+_TEST_OBJS = proxy.o logger.o run_proxy.o util.o client.o server.o mydns.o
+TEST_OBJS = $(patsubst %,$(TESTODIR)/%,$(_TEST_OBJS))
 
 # Binaries
 BINS = proxy nameserver
 
-TESTBINS = 
+TESTBINS = test_dns
 
 # Explit build and testing targets
 all: ${BINS}
@@ -41,8 +42,8 @@ nameserver: $(NS_OBJS)
 $(ODIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-$(ODIR)/%.o: $(TESTDIR)/%.c $(HEADERS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+$(TESTODIR)/%.o: $(SRCDIR)/%.c $(HEADERS)
+	$(CC) -DTESTING -c -o $@ $< $(CFLAGS)
 
 .PHONY: clean
 clean:
@@ -50,3 +51,5 @@ clean:
 		$(ODIR)/* $(SRCDIR)/*~ $(IDIR)/*~ $(SRCDIR)/*.orig $(IDIR)/*.orig  $(TESTDIR)/*.~ $(TESTDIR)/*.orig \
 		log/*
 
+test_dns: $(TEST_OBJS)
+	$(CC) -DTESTING $(CFLAGS)  $(TESTODIR)/util.o $(TESTODIR)/proxy.o $(TESTODIR)/mydns.o $(TESTODIR)/logger.o -o $(TESTBINDIR)/test_dns $(LDFLAGS)

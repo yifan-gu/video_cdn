@@ -10,6 +10,13 @@
 
 #define IP_LEN 64
 #define DNS_NAME_LEN 255
+#define UDP_LEN 1500
+#define DNS_TIMEOUT 5
+
+enum dns_type {
+    DNS_TYPE_QUESTION,
+    DNS_TYPE_ANSWER,
+};
 
 #define SETFLAG(flag, value, offset) ((flag) |= ((value) << (15 - (offset))))
 
@@ -17,8 +24,10 @@
  * Dns struct
  */
 typedef struct dns_s {
+    int sock;
     char dns_ip[IP_LEN];
     unsigned int dns_port;
+    struct sockaddr_in addr;
 } dns_t;
 
 /**
@@ -29,12 +38,15 @@ typedef struct dns_header_s {
     uint16_t flag;
     uint16_t qdcount;
     uint16_t ancount;
+    uint16_t nscount;
+    uint16_t arcount;
 } dns_header_t;
 
 /**
  * dns question struct
  */
 typedef struct dns_question_s {
+    int qname_len; // length of the qname
     char qname[DNS_NAME_LEN];
     uint16_t qtype;
     uint16_t qclass;
@@ -47,21 +59,20 @@ typedef struct dns_answer_s {
     char name[DNS_NAME_LEN];
     uint16_t type;
     uint16_t class;
-    uint32_t ttl;
+    int32_t ttl;
     uint16_t rdlength;
     uint32_t rdata; // assuming only one type of rdata(class A) is requested for simplicity
 } dns_answer_t;
-
 
 /**
  * Dns message struct
  */
 typedef struct dns_message_s {
+    int type;
+    size_t length;
     dns_header_t header;
-    union {
-        dns_question_t question;
-        dns_answer_t answer; // actually, we will only have one answer
-    } content;
+    dns_question_t question;
+    dns_answer_t answer; // actually, we will only have one answer
 } dns_message_t;
 
 /**
@@ -104,6 +115,6 @@ int resolve(const char *node, const char *service,
 
 int dns_server_info(const char *server_ip);
 
-int init_question(dns_question_t *q);
+int init_question(dns_message_t *m);
 
 #endif // for #ifndef _MYDNS_H

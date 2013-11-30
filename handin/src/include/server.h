@@ -13,7 +13,7 @@ enum server_st {
     
 typedef struct _Server{
     enum server_st state;
-    int fd;
+    int fd; // it's actually corresponding to fake ip
 
     char buf[SRVBUF_SIZE];
     int closed;

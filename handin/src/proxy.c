@@ -25,6 +25,7 @@ Proxy proxy;
 
 static int download_bunny();
 
+#ifndef TESTING
 int main(int argc, char const* argv[])
 {
     // argv:
@@ -76,9 +77,9 @@ int main(int argc, char const* argv[])
     }
     logger(LOG_INFO, "Proxy starts listening on port: %s", argv[3]);
 
-    /*if( download_bunny() < 0) {*/
-        /*return -1;*/
-    /*}*/
+    /*if( download_bunny() < 0) {
+        return -1;
+        }*/
 
     /*if( proxy_conn_server() < 0) {*/
         /*return 0;*/
@@ -93,6 +94,7 @@ int main(int argc, char const* argv[])
     run_proxy();
     return 0;
 }
+#endif
 
 /*
 @reference:
@@ -192,7 +194,6 @@ int proxy_conn_server() {
 
     proxy.server.fd = socket(AF_INET, SOCK_STREAM, 0);
 
-    optval = 1;
     setsockopt(proxy.server.fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval) );
 
     if( bind(proxy.server.fd, (struct sockaddr *) &proxy.myaddr, sizeof(proxy.myaddr)) < 0) {
