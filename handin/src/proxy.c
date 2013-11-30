@@ -29,13 +29,13 @@ static int download_bunny();
 int main(int argc, char const* argv[])
 {
     // argv:
-    // 1. log
-    // 2. alpha
-    // 3. listen port
-    // 4. fake-ip
-    // 5. dns ip
-    // 6. dns port
-    // 7. (optional) server ip
+    //  1. log
+    //  2. alpha
+    //  3. listen port
+    //  4. fake-ip
+    //  5. dns ip
+    //  6. dns port
+    //  7. (optional) server ip
 
     // system logging
     if( init_log(NULL) < 0 ) {
@@ -77,9 +77,9 @@ int main(int argc, char const* argv[])
     }
     logger(LOG_INFO, "Proxy starts listening on port: %s", argv[3]);
 
-    /*if( download_bunny() < 0) {
-        return -1;
-        }*/
+    /*if( download_bunny() < 0) {*/
+        /*return -1;*/
+    /*}*/
 
     /*if( proxy_conn_server() < 0) {*/
         /*return 0;*/
@@ -193,7 +193,6 @@ int proxy_conn_server() {
     int optval;
 
     proxy.server.fd = socket(AF_INET, SOCK_STREAM, 0);
-
     setsockopt(proxy.server.fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval) );
 
     if( bind(proxy.server.fd, (struct sockaddr *) &proxy.myaddr, sizeof(proxy.myaddr)) < 0) {
