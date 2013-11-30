@@ -56,4 +56,5 @@ int parse_argument(int argc, const char *argv[]) {
 
     return 0;
 
+>>>>>>> 3aa6b14979a9b0ca85fa3ab265531a73b427356f
 }
