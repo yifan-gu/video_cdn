@@ -1,6 +1,9 @@
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
+
 #include <node_map.h>
+#include <logger.h>
 
 int init_nodemap(NodeMap *nmap) {
     nmap->node_num = 0;
@@ -78,4 +81,47 @@ int update_adj(NodeMap *nmap, int pos, int version, char *neighbors) {
     }
 
     return 0;
+}
+
+const char* find_closest_server( NodeMap *nmap, char *client){
+    int start;
+
+    start = getNodeByName(nmap, client);
+    if(start == -1){
+        logger(LOG_WARN, "Client not found on graph: %s", client);
+        return NULL;
+    }
+
+    int visit[MAX_NODE_NUM];
+    int q[MAX_NODE_NUM];
+    int qf, qe;
+    int i;
+    int n, neighbor;
+    Adjacent *adj;
+
+    for (i = 0; i < nmap->node_num; i++) {
+        visit[i] = 0;
+    }
+
+    visit[start] = 1;
+    q[0] = start;
+    qf = 0;
+    qe = 1;
+
+    while(qf < qe){
+        n = q[qf++];
+        adj = & nmap->nodes[n].adj;
+        for (i = 0; i < adj->count; i++) {
+            neighbor = adj->node_pos[i];
+            if( ! visit[neighbor] ){
+                q[qe++] = neighbor;
+                if( nmap->nodes[neighbor].is_server ){
+                    return nmap->nodes[neighbor].name;
+                }
+                visit[neighbor] = 1;
+            }
+        }
+    }
+
+    return NULL;
 }

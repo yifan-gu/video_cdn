@@ -30,4 +30,6 @@ void markAsServer(NodeMap *nmap, int pos);
 
 int update_adj(NodeMap *nmap, int pos, int version, char *neighbors);
 
+const char* find_closest_server(NodeMap *, char *start);
+
 #endif // for #ifndef _NODE_MAP_H

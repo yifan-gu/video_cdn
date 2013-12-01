@@ -12,6 +12,16 @@ NameServer ns;
 int main(int argc, char const* argv[])
 {
     parse_argument(argc, argv);
+
+#ifdef TESTING
+    char input[1024];
+    while(scanf("%s", input) != EOF){
+        char *output = get_server(input);
+        printf("%s - %s\n", input,
+                             (output)? output: "None" );
+    }
+#endif
+
     return 0;
 }
 
@@ -19,7 +29,8 @@ int parse_argument(int argc, const char *argv[]) {
     int i,j,k;
     ns.rr = -1;
 
-    for (i = 1; i <= argc; i++) {
+    k = -1;
+    for (i = 1; i < argc; i++) {
         if(strcmp("-r", argv[i]) == 0) {
             ns.rr = 0;
             k = i;
@@ -28,7 +39,7 @@ int parse_argument(int argc, const char *argv[]) {
     }
 
     j = 0;
-    for (i = 1; i <= argc; i++) {
+    for (i = 1; i < argc; i++) {
         if(i == k) continue;
         switch (j) {
         case 0: //log
@@ -46,7 +57,7 @@ int parse_argument(int argc, const char *argv[]) {
             if(parse_servers(argv[i]) < 0) {
                 return -1;
             }
-            if(ns.rr == -1)
+            if(ns.rr != -1)
                 return 0;
             break;
         case 4: // lsa
@@ -149,4 +160,21 @@ void print_graph(){
         printf("\n");
     }
     printf("------- NETWORK TOPOLOGY END --------\n");
+}
+
+const char *get_server(char *client){
+    const char *res;
+
+    // Geographic distance
+    if(ns.rr == -1){
+        return find_closest_server(&ns.nmap, client);
+    }
+
+    // round robin
+    if(ns.nmap.node_num == 0)
+        return NULL;
+
+    res = (const char*) ns.nmap.nodes[ns.rr].name ;
+    ns.rr = (ns.rr + 1) % ns.nmap.node_num;
+    return res;
 }

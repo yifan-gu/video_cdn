@@ -22,4 +22,6 @@ int parse_lsa(const char *);
 
 void print_graph();
 
+const char *get_server(char *client);
+
 #endif // for #ifndef _NAMESERVER_H
