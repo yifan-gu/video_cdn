@@ -121,11 +121,12 @@ int resolve(const char *node, const char *service,
                 goto FAILED;
             }
 
-            new_res->ai_canonname = (char *)malloc(strlen(node) + 1);
+            new_res->ai_canonname = (char *)calloc(1, strlen(node) + 1);
             if (NULL == new_res->ai_canonname) {
                 logger(LOG_WARN, "malloc() failed");
                 goto FAILED;
             }
+            memcpy(new_res->ai_canonname, node, strlen(node));
 
             new_res->ai_next = NULL;
 
@@ -157,6 +158,13 @@ FAILED:
     return -1;
 }
 
+void freeaddr(struct addrinfo *res) {
+    free(res->ai_addr);
+    freeaddrinfo(res);
+
+    return;
+}
+
 int dns_server_info(const char *server_ip) {
     struct addrinfo *result;
     int res;
@@ -176,8 +184,8 @@ int dns_server_info(const char *server_ip) {
 #ifndef TESTING
     proxy.toaddr.sin_addr = ((struct sockaddr_in *)(result->ai_addr))->sin_addr;
 #endif
-    
-    freeaddrinfo(result);           /* No longer needed */
+
+    freeaddr(result); /* No longer needed */
     return 0;
 }
 
@@ -203,7 +211,10 @@ int main(int argc, char *argv[])
 
     printf("addr %s:%d\n", inet_ntoa(((struct sockaddr_in *)res->ai_addr)->sin_addr),
            ntohs(((struct sockaddr_in *)res->ai_addr)->sin_port));
-    freeaddrinfo(res);
+    printf("%p %s\n", res->ai_addr, res->ai_canonname);
+
+    freeaddr(res);
+    
     return 0;
 }
 #endif
