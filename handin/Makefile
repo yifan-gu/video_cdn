@@ -7,20 +7,20 @@ TESTBINDIR = test/bin
 
 CC 		= gcc
 #CFLAGS  = -I$(IDIR) -Wall -Werror
-CFLAGS  = -I$(IDIR) -Wall -DTESTING
+CFLAGS  = -I$(IDIR) -Wall -g #-DTESTING
 LDFLAGS	= 
 
 _HEADERS = proxy.h logger.h run_proxy.h util.h client.h server.h mydns.h \
 		   nameserver.h node_map.h
 HEADERS = $(patsubst %,$(IDIR)/%,$(_HEADERS))
 
-_OBJS = proxy.o logger.o run_proxy.o util.o client.o server.o mydns.o
+_OBJS = proxy.o logger.o run_proxy.o util.o client.o server.o mydns.o dns_util.o
 OBJS = $(patsubst %,$(ODIR)/%,$(_OBJS))
 
-_NS_OBJS = nameserver.o logger.o node_map.o
+_NS_OBJS = nameserver.o logger.o node_map.o dns_util.o
 NS_OBJS = $(patsubst %,$(ODIR)/%,$(_NS_OBJS))
 
-_TEST_OBJS = proxy.o logger.o run_proxy.o util.o client.o server.o mydns.o
+_TEST_OBJS = proxy.o logger.o run_proxy.o util.o client.o server.o mydns.o dns_util.o
 TEST_OBJS = $(patsubst %,$(TESTODIR)/%,$(_TEST_OBJS))
 
 # Binaries
@@ -52,4 +52,4 @@ clean:
 		log/*
 
 test_dns: $(TEST_OBJS)
-	$(CC) -DTESTING $(CFLAGS)  $(TESTODIR)/util.o $(TESTODIR)/proxy.o $(TESTODIR)/mydns.o $(TESTODIR)/logger.o -o $(TESTBINDIR)/test_dns $(LDFLAGS)
+	$(CC) -DTESTING $(CFLAGS) $(TESTODIR)/dns_util.o $(TESTODIR)/util.o $(TESTODIR)/proxy.o $(TESTODIR)/mydns.o $(TESTODIR)/logger.o -o $(TESTBINDIR)/test_dns $(LDFLAGS)
