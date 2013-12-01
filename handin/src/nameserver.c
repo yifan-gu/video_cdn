@@ -11,14 +11,18 @@ NameServer ns;
 
 int main(int argc, char const* argv[])
 {
+    if( init_log(NULL) < 0 ) {
+        printf("Failed: Can't init logging\n");
+        return 0;
+    }
     parse_argument(argc, argv);
 
 #ifdef TESTING
     char input[1024];
     while(scanf("%s", input) != EOF){
-        char *output = get_server(input);
+        const char *output = get_server(input);
         printf("%s - %s\n", input,
-                             (output)? output: "None" );
+                            (output)? output: "None" );
     }
 #endif
 

@@ -88,7 +88,7 @@ const char* find_closest_server( NodeMap *nmap, char *client){
 
     start = getNodeByName(nmap, client);
     if(start == -1){
-        logger(LOG_WARN, "Client not found on graph: %s", client);
+        logger(LOG_INFO, "Client (%s) not found on graph", client);
         return NULL;
     }
 
@@ -123,5 +123,6 @@ const char* find_closest_server( NodeMap *nmap, char *client){
         }
     }
 
+    logger(LOG_INFO, "Can't found server for client (%s)", client);
     return NULL;
 }

@@ -1,7 +1,7 @@
 #!/bin/sh
 
 cd handin
-make
+make || exit 1
 cd ..
 
 handin/proxy log/log01 0.5 8000 1.0.0.1 5.0.0.1 53 3.0.0.1 &

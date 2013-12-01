@@ -45,7 +45,7 @@ int main(int argc, char const* argv[])
 
     parse_addr(& proxy.myaddr, argv[4], 0); // 0 -- random port
 
-    if (argc < 7) {
+    if (argc < 8) {
         if( init_mydns(argv[5], atoi(argv[6]) ) < 0){
             logger(LOG_ERROR, "Failed: Init DNS");
             return -1;
