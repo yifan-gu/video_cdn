@@ -4,7 +4,7 @@
 #include "mydns.h"
 
 /**
- * make question
+ * Make question
  *
  * @param m, ptr to DNS question struct
  * @param node, the domain name
@@ -14,7 +14,7 @@
 int make_question(dns_message_t *m, const char *node);
 
 /**
- * make answer
+ * Make answer
  *
  * @param m, ptr to DNS answer message struct
  * @param q, ptr to DNS question message struct
@@ -26,7 +26,7 @@ int make_question(dns_message_t *m, const char *node);
 int make_answer(dns_message_t *m, dns_message_t *q, char rcode, char *answer);
 
 /**
- * encode the DNS message into a UDP buffer
+ * Encode the DNS message into a UDP buffer
  *
  * @param m, the DNS message struct
  * @param buf, the empty buffer
@@ -36,7 +36,7 @@ int make_answer(dns_message_t *m, dns_message_t *q, char rcode, char *answer);
 ssize_t encode_message(dns_message_t *m, void *buf);
 
 /**
- * decode the DNS message from a UDP buffer
+ * Decode the DNS message from a UDP buffer
  *
  * @param m, the DNS message struct
  * @param buf, the UDP buffer
@@ -45,6 +45,16 @@ ssize_t encode_message(dns_message_t *m, void *buf);
  * @return 0 on success, -1 if fails
  */
 int decode_message(dns_message_t *m, void *buf, ssize_t len);
+
+/**
+ * Test whether the answer is valid
+ *
+ * @param qm, pointer to the original question message struct
+ * @param am, pointer to the answer message struct
+ *
+ * @return 0 on success, -1 if fails
+ */
+int exam_answer(dns_message_t *qm, dns_message_t *am);
 
 /**
  * a debugging helper

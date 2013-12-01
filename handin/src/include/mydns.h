@@ -20,7 +20,7 @@ enum dns_type {
 
 /* both are host-endian */
 #define SETFLAG(flag, value, offset) ((flag) |= ((value) << (15 - (offset)))) 
-#define GETFLAG(flag, offset)  ((flag) >> (15 - (offset)) & 1)
+#define GETFLAG(flag, offset, width)  (((flag) >> (15 - (offset))) & ((1 << (width)) - 1))
 
 /**
  * Dns struct
