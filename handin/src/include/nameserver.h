@@ -12,7 +12,7 @@ typedef struct _NameServer {
     int rr;
 
     struct sockaddr_in addr;
-
+    int sock;
     NodeMap nmap;
 } NameServer;
 
