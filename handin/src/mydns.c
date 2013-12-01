@@ -103,7 +103,8 @@ int resolve(const char *node, const char *service,
             && exam_answer(&qm, &am) == 0) { // decode succeeded
 
             new_res = NULL;
-            new_res = (struct addrinfo *)calloc(1, sizeof(struct addrinfo));
+            new_res = (struct addrinfo *)calloc(1, sizeof(struct addrinfo)
+                                                + sizeof(struct sockaddr_in));
             if (NULL == *res) {
                 logger(LOG_WARN, "malloc() failed");
                 goto FAILED;
@@ -115,12 +116,15 @@ int resolve(const char *node, const char *service,
             new_res->ai_socktype = SOCK_STREAM;
             new_res->ai_protocol = 0;
             new_res->ai_addrlen = sizeof(struct sockaddr_in);
-            new_res->ai_addr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in));
-            if (NULL == new_res->ai_addr) {
-                logger(LOG_WARN, "malloc() failed");
-                goto FAILED;
-            }
 
+            /* fill in the sockaddr struct */
+            new_res->ai_addr = (struct sockaddr *) (new_res + 1);
+            sa_in = (struct sockaddr_in *)new_res->ai_addr;
+            sa_in->sin_family = AF_INET;
+            sa_in->sin_port = htons(atoi(service));
+            memcpy(&sa_in->sin_addr, &am.answer.rdata, sizeof(am.answer.rdata));
+
+            /* fill the canonname */
             new_res->ai_canonname = (char *)calloc(1, strlen(node) + 1);
             if (NULL == new_res->ai_canonname) {
                 logger(LOG_WARN, "malloc() failed");
@@ -129,13 +133,6 @@ int resolve(const char *node, const char *service,
             memcpy(new_res->ai_canonname, node, strlen(node));
 
             new_res->ai_next = NULL;
-
-            /* fill in the sockaddr struct */
-            sa_in = (struct sockaddr_in *)new_res->ai_addr;
-            sa_in->sin_family = AF_INET;
-            sa_in->sin_port = htons(atoi(service));
-            memcpy(&sa_in->sin_addr, &am.answer.rdata, sizeof(am.answer.rdata));
-
             (*res) = new_res;
         }
     }
@@ -144,25 +141,15 @@ int resolve(const char *node, const char *service,
     
 FAILED:
     if (new_res != NULL) {
-        if (new_res->ai_addr != NULL) {
+        if (new_res->ai_addr != NULL)
             free(new_res->ai_addr);
-        }
-
-        if (new_res->ai_canonname != NULL) {
+        if (new_res->ai_canonname != NULL)
             free(new_res->ai_canonname);
-        }
-
+        
         free(new_res);
     }
 
     return -1;
-}
-
-void freeaddr(struct addrinfo *res) {
-    free(res->ai_addr);
-    freeaddrinfo(res);
-
-    return;
 }
 
 int dns_server_info(const char *server_ip) {
@@ -185,7 +172,7 @@ int dns_server_info(const char *server_ip) {
     proxy.toaddr.sin_addr = ((struct sockaddr_in *)(result->ai_addr))->sin_addr;
 #endif
 
-    freeaddr(result); /* No longer needed */
+    freeaddrinfo(result); /* No longer needed */
     return 0;
 }
 
@@ -213,7 +200,7 @@ int main(int argc, char *argv[])
            ntohs(((struct sockaddr_in *)res->ai_addr)->sin_port));
     printf("%p %s\n", res->ai_addr, res->ai_canonname);
 
-    freeaddr(res);
+    freeaddrinfo(res);
     
     return 0;
 }

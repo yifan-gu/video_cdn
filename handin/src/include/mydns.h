@@ -117,13 +117,6 @@ int resolve(const char *node, const char *service,
             const struct addrinfo *hints, struct addrinfo **res);
 
 /**
- * a wrappger to free addrinfo
- *
- * @param res, the addrinfo returned by resolve()
- */
-void freeaddr(struct addrinfo *res);
-
-/**
  * init the DNS message struct
  *
  * @param m, the pointer to a DNS message struct
