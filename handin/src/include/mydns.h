@@ -18,7 +18,9 @@ enum dns_type {
     DNS_TYPE_ANSWER,
 };
 
-#define SETFLAG(flag, value, offset) ((flag) |= ((value) << (15 - (offset))))
+/* both are host-endian */
+#define SETFLAG(flag, value, offset) ((flag) |= ((value) << (15 - (offset)))) 
+#define GETFLAG(flag, offset, width)  (((flag) >> (15 - (offset))) & ((1 << (width)) - 1))
 
 /**
  * Dns struct
@@ -56,12 +58,13 @@ typedef struct dns_question_s {
  * dns resource record struct
  */
 typedef struct dns_answer_s {
+    int name_len; // length of the name
     char name[DNS_NAME_LEN];
     uint16_t type;
     uint16_t class;
     int32_t ttl;
     uint16_t rdlength;
-    uint32_t rdata; // assuming only one type of rdata(class A) is requested for simplicity
+    struct in_addr rdata; // assuming only one type of rdata(class A) is requested for simplicity
 } dns_answer_t;
 
 /**
@@ -115,6 +118,13 @@ int resolve(const char *node, const char *service,
 
 int dns_server_info(const char *server_ip);
 
+/**
+ * init the DNS message struct
+ *
+ * @param m, the pointer to a DNS message struct
+ *
+ * @return 0 on success, -1 if fails
+ */
 int init_question(dns_message_t *m);
 
 #endif // for #ifndef _MYDNS_H

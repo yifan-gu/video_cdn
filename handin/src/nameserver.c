@@ -4,17 +4,41 @@
 #include <string.h>
 #include <arpa/inet.h>
 
+#include "dns_util.h"
 #include <nameserver.h>
 #include <logger.h>
 
 NameServer ns;
 
+static int init_server(NameServer *ns) {
+    if ((ns->sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        logger(LOG_WARN, "socket() failed");
+        return -1;
+    }
+
+    if (bind(ns->sock, (struct sockaddr *) &ns->addr, sizeof(ns->addr)) < 0) {
+        logger(LOG_WARN, "bind() failed");
+        return -1;
+    }
+    
+    return 0;
+}
+
 int main(int argc, char const* argv[])
 {
+    ssize_t ret;
+    char rcode, buf[UDP_LEN];
+    char *answer;
+    struct sockaddr_in cli_addr;
+    socklen_t addrlen;
+
+    dns_message_t qm, am;
+
     if( init_log(NULL) < 0 ) {
         printf("Failed: Can't init logging\n");
         return 0;
     }
+
     parse_argument(argc, argv);
 
 #ifdef TESTING
@@ -25,6 +49,48 @@ int main(int argc, char const* argv[])
                             (output)? output: "None" );
     }
 #endif
+
+    if (init_server(&ns) < 0) {
+        return -1;
+    }
+    
+    // main loop, it's a blocking version for simplicity
+    while (1) {
+        addrlen = sizeof(cli_addr);
+        if ((ret = recvfrom(ns.sock, buf, UDP_LEN, 0,
+                            (struct sockaddr *) &cli_addr, &addrlen)) < 0) {
+            logger(LOG_WARN, "recvfrom() failed");
+            continue;
+        }
+
+        if (0 == ret) {
+            logger(LOG_WARN, "recvfrom() receives 0 bytes, peer shutdown");
+            continue;
+        }
+
+        if (decode_message(&qm, buf, ret) == 0) { // recvfrom and decode succeeded
+            // lookup
+            answer = "128.1.34.33";
+            rcode = 0; // TODO choose rcode
+
+            // make answer
+            if (make_answer(&am, &qm, rcode, answer) < 0) {
+                continue;
+            }
+            //dump_dns_message(&am);
+            // encode
+            if ((ret = encode_message(&am, buf)) < 0) {
+                continue;
+            }
+
+            // sendto
+            if (sendto(ns.sock, buf, ret, 0,
+                       (struct sockaddr *) &cli_addr,
+                       addrlen) < 0) {
+                continue;
+            }
+        }
+    }
 
     return 0;
 }
@@ -157,7 +223,7 @@ void print_graph(){
     printf("------- NETWORK TOPOLOGY ------------\n");
     for (i = 0; i < nmap->node_num; i++) {
         printf("%s %s: ", nmap->nodes[i].name,
-                        (nmap->nodes[i].is_server)? "(server)":"" );
+               (nmap->nodes[i].is_server)? "(server)":"" );
         for (j = 0; j < nmap->nodes[i].adj.count; j++) {
             printf("%s ", nmap->nodes[(nmap->nodes[i].adj.node_pos[j])].name );
         }
@@ -182,3 +248,5 @@ const char *get_server(char *client){
     ns.rr = (ns.rr + 1) % ns.nmap.node_num;
     return res;
 }
+
+
