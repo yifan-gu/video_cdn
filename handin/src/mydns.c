@@ -51,16 +51,18 @@ int resolve(const char *node, const char *service,
             const struct addrinfo *hints, struct addrinfo **res) {
 
     char buf[UDP_LEN];
-    dns_message_t m;
+    dns_message_t qm, am;
     size_t ret;
     fd_set fdset;
     struct timeval tv;
+    struct addrinfo *new_res;
+    struct sockaddr_in * sa_in;
 
-    if ((ret = make_question(&m, node)) < 0) {
+    if ((ret = make_question(&qm, node)) < 0) {
         return -1;
     }
 
-    if ((ret = encode_message(&m, buf)) < 0) {
+    if ((ret = encode_message(&qm, buf)) < 0) {
         return -1;
     }
 
@@ -96,14 +98,63 @@ int resolve(const char *node, const char *service,
             logger(LOG_WARN, "recvfrom() received 0 bytes, peer shutdown");
             return -1;
         }
+        
+        if (decode_message(&am, buf, ret) == 0
+            && exam_answer(&qm, &am) == 0) { // decode succeeded
 
-        if (decode_message(&m, buf, ret) == 0) { // recvfrom and decode succeeded
+            new_res = NULL;
+            new_res = (struct addrinfo *)calloc(1, sizeof(struct addrinfo));
+            if (NULL == *res) {
+                logger(LOG_WARN, "malloc() failed");
+                goto FAILED;
+            }
             
-            // do resove
+            /* fill in the addrinfo struct, ignoring hints */
+            new_res->ai_flags = 0;
+            new_res->ai_family = AF_INET;
+            new_res->ai_socktype = SOCK_STREAM;
+            new_res->ai_protocol = 0;
+            new_res->ai_addrlen = sizeof(struct sockaddr_in);
+            new_res->ai_addr = (struct sockaddr *)malloc(sizeof(struct sockaddr_in));
+            if (NULL == new_res->ai_addr) {
+                logger(LOG_WARN, "malloc() failed");
+                goto FAILED;
+            }
+
+            new_res->ai_canonname = (char *)malloc(strlen(node) + 1);
+            if (NULL == new_res->ai_canonname) {
+                logger(LOG_WARN, "malloc() failed");
+                goto FAILED;
+            }
+
+            new_res->ai_next = NULL;
+
+            /* fill in the sockaddr struct */
+            sa_in = (struct sockaddr_in *)new_res->ai_addr;
+            sa_in->sin_family = AF_INET;
+            sa_in->sin_port = htons(atoi(service));
+            memcpy(&sa_in->sin_addr, &am.answer.rdata, sizeof(am.answer.rdata));
+
+            (*res) = new_res;
         }
     }
 
     return 0;
+    
+FAILED:
+    if (new_res != NULL) {
+        if (new_res->ai_addr != NULL) {
+            free(new_res->ai_addr);
+        }
+
+        if (new_res->ai_canonname != NULL) {
+            free(new_res->ai_canonname);
+        }
+
+        free(new_res);
+    }
+
+    return -1;
 }
 
 int dns_server_info(const char *server_ip) {
@@ -148,8 +199,11 @@ int main(int argc, char *argv[])
     parse_addr(& proxy.myaddr, "127.0.0.1", 0); // 0 -- random port
     init_mydns("127.0.0.1", 53);
     ret = resolve("video.cmu.edu", "8080", NULL, &res);
-    //printf("ret %d\n", ret);
+    printf("ret %d\n", ret);
 
+    printf("addr %s:%d\n", inet_ntoa(((struct sockaddr_in *)res->ai_addr)->sin_addr),
+           ntohs(((struct sockaddr_in *)res->ai_addr)->sin_port));
+    freeaddrinfo(res);
     return 0;
 }
 #endif

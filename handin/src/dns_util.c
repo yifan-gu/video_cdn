@@ -90,6 +90,37 @@ static void decode_question(dns_message_t *m, void *buf, void *offset) {
 }
 
 static void decode_answer(dns_message_t *m, void *buf, void *offset) {
+    m->answer.name_len = m->length - sizeof(m->header)
+        - sizeof(m->answer.type) - sizeof(m->answer.class) - sizeof(m->answer.ttl)
+        - sizeof(m->answer.rdlength) - sizeof(m->answer.rdata);
+
+    /* decode names */
+    memcpy(&m->answer.name, offset, m->answer.name_len);
+    offset += m->answer.name_len;
+
+    /* decode type */
+    memcpy(&m->answer.type, offset, sizeof(m->answer.type));
+    m->answer.type = ntohs(m->answer.type);
+    offset += sizeof(m->answer.type);
+
+    /* decode class */
+    memcpy(&m->answer.class, offset, sizeof(m->answer.class));
+    m->answer.class = ntohs(m->answer.class);
+    offset += sizeof(m->answer.class);
+
+    /* decode ttl */
+    memcpy(&m->answer.ttl, offset, sizeof(m->answer.ttl));
+    m->answer.ttl = ntohs(m->answer.ttl);
+    offset += sizeof(m->answer.ttl);
+
+    /* decode rdlength */
+    memcpy(&m->answer.rdlength, offset, sizeof(m->answer.rdlength));
+    m->answer.rdlength = ntohl(m->answer.rdlength);
+    offset += sizeof(m->answer.rdlength);
+
+    /* decode rdata */
+    memcpy(&m->answer.rdata, offset, sizeof(m->answer.rdata));
+    
     return;
 }
 
@@ -233,7 +264,7 @@ int decode_message(dns_message_t *m, void *buf, ssize_t len) {
     /* deal with body */
     offset = buf + sizeof(m->header);
     
-    m->type = GETFLAG(m->header.flag, 0); // get type
+    m->type = GETFLAG(m->header.flag, 0, 1); // get type
     if (DNS_TYPE_QUESTION == m->type) {
         decode_question(m, buf, offset);
     } else { // answer
@@ -243,13 +274,28 @@ int decode_message(dns_message_t *m, void *buf, ssize_t len) {
     return 0;
 }
 
+int exam_answer(dns_message_t *qm, dns_message_t *am) {
+    if (qm->header.id != am->header.id) {
+        logger(LOG_WARN, "answer id not correct, q: %d, a: %d", qm->header.id, am->header.id);
+        return -1;
+    }
+
+    int rcode = GETFLAG(am->header.flag, 15, 4);
+    if (rcode != 0) {
+        logger(LOG_WARN, "RCODE not zero %d", rcode);
+        return -1;
+    }
+
+    return 0;
+}
+
 int dump_dns_message(dns_message_t *m) {
     fprintf(stderr, "-----------------\n");
     fprintf(stderr, "|type: %9d|\n", m->type);
     fprintf(stderr, "|length: %7ld|\n", m->length);
     fprintf(stderr, "|header |\n");
     fprintf(stderr, "| id: %9x|\n", m->header.id);
-    fprintf(stderr, "| AA: %9d|\n", GETFLAG(m->header.flag, 5));
+    fprintf(stderr, "| AA: %9d|\n", GETFLAG(m->header.flag, 5, 1));
     fprintf(stderr, "| qdcount: %4d|\n", m->header.qdcount);
     fprintf(stderr, "| ancount: %4d|\n", m->header.ancount);
 
