@@ -25,6 +25,7 @@ Proxy proxy;
 
 static int download_bunny();
 
+#ifndef TESTING
 int main(int argc, char const* argv[])
 {
     // argv:
@@ -62,7 +63,7 @@ int main(int argc, char const* argv[])
     return 0; // for testing DNS
 
     proxy.alpha = atof(argv[2]);
-    proxy.tput = proxy.avg_tput  = 512;
+    proxy.tput = proxy.avg_tput = 512;
 
     init_activity_log(&proxy, argv[1]);
 
@@ -93,11 +94,12 @@ int main(int argc, char const* argv[])
     run_proxy();
     return 0;
 }
+#endif
 
 /*
 @reference:
-  getline, http://man7.org/linux/man-pages/man3/getline.3.html
- */
+getline, http://man7.org/linux/man-pages/man3/getline.3.html
+*/
 static int parse_bitrates() {
     int read;
     FILE *fp;
@@ -191,8 +193,6 @@ int proxy_conn_server() {
     int optval;
 
     proxy.server.fd = socket(AF_INET, SOCK_STREAM, 0);
-
-    optval = 1;
     setsockopt(proxy.server.fd, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval) );
 
     if( bind(proxy.server.fd, (struct sockaddr *) &proxy.myaddr, sizeof(proxy.myaddr)) < 0) {
@@ -281,8 +281,8 @@ int dump_proxy_info(Proxy *p) {
 }
 
 /**
- * activity log
- */
+* activity log
+*/
 int init_activity_log(Proxy *p, const char *file) {
     p->log = fopen(file, "w+");
     if (NULL == p->log) {

@@ -61,7 +61,6 @@ int parse_argument(int argc, const char *argv[]) {
     }
 
     return 0;
-
 }
 
 int parse_servers(const char *filename) {
