@@ -41,9 +41,10 @@ static int update_tput(Proxy *p, int len) {
             old_delta = p->delta;
         }
     }
-
+    
     // Throughput Kbps
     p->tput = (float)len*8 / (float)p->delta; // from milliseconds to seconds, B to KBp
+    p->tput = p->tput > TPUT_THRESHOLD ? TPUT_THRESHOLD : p->tput; // avoid too high throughput
     
     p->avg_tput = p->alpha * p->tput + (1 - p->alpha) * p->avg_tput;
 
