@@ -289,12 +289,12 @@ int exam_answer(dns_message_t *qm, dns_message_t *am) {
     return 0;
 }
 
-void interprete_qname(char *name, char *res, int len) {
+void interpret_qname(char *name, char *res, int len) {
     char cnt;
     int i, j;
 
     i = 0;
-    while (1) {
+    while (i < len) {
         cnt = name[i];
         if (0 == cnt) {
             i--;
