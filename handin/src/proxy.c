@@ -54,6 +54,7 @@ int main(int argc, char const* argv[])
             logger(LOG_ERROR, "Failed: DNS query");
             return -1;
         }
+        logger(LOG_DEBUG, "server addr %s:%d\n", inet_ntoa(proxy.toaddr.sin_addr), ntohs(proxy.toaddr.sin_port));
         //parse_addr(& proxy.toaddr, "0.0.0.0", SERVER_PORT);
     }
     else{

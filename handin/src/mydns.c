@@ -105,7 +105,7 @@ int resolve(const char *node, const char *service,
             new_res = NULL;
             new_res = (struct addrinfo *)calloc(1, sizeof(struct addrinfo)
                                                 + sizeof(struct sockaddr_in));
-            if (NULL == *res) {
+            if (NULL == new_res) {
                 logger(LOG_WARN, "malloc() failed");
                 goto FAILED;
             }
@@ -177,6 +177,7 @@ int dns_server_info(const char *server_ip) {
     memcpy(&proxy.toaddr, result->ai_addr, sizeof(struct sockaddr_in));
 
     freeaddrinfo(result); /* No longer needed */
+    
     return 0;
 }
 
