@@ -28,11 +28,12 @@ int main(int argc, char const* argv[])
 {
     ssize_t ret;
     char rcode, buf[UDP_LEN];
-    char *answer;
+    const char *answer;
     struct sockaddr_in cli_addr;
     socklen_t addrlen;
 
     dns_message_t qm, am;
+    char name[DNS_NAME_LEN];
 
     if( init_log(NULL) < 0 ) {
         printf("Failed: Can't init logging\n");
@@ -69,10 +70,16 @@ int main(int argc, char const* argv[])
         }
 
         if (decode_message(&qm, buf, ret) == 0) { // recvfrom and decode succeeded
-            // lookup
-            answer = "128.1.34.33";
-            rcode = 0; // TODO choose rcode
-
+            interprete_qname(qm.question.qname, name, qm.question.qname_len);
+            //printf("%s\n", name);
+            if (strcmp(name, SERVER_NAME) != 0) {
+                rcode = 3;
+                answer = "";
+            } else {
+                answer = get_server(inet_ntoa(cli_addr.sin_addr)); // lookup
+                rcode = 0;
+            }
+            //printf("%s\n", answer);
             // make answer
             if (make_answer(&am, &qm, rcode, answer) < 0) {
                 continue;

@@ -7,7 +7,7 @@ TESTBINDIR = test/bin
 
 CC 		= gcc
 #CFLAGS  = -I$(IDIR) -Wall -Werror
-CFLAGS  = -I$(IDIR) -Wall #-DTESTING
+CFLAGS  = -I$(IDIR) -Wall -g #-DTESTING
 LDFLAGS	= 
 
 _HEADERS = proxy.h logger.h run_proxy.h util.h client.h server.h mydns.h \
