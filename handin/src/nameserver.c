@@ -3,12 +3,19 @@
 #include <unistd.h>
 #include <string.h>
 #include <arpa/inet.h>
+#include <sys/time.h>
 
 #include "dns_util.h"
 #include <nameserver.h>
 #include <logger.h>
 
 NameServer ns;
+
+static unsigned long get_timestamp_now(void) {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (tv.tv_sec * 1000) + (tv.tv_usec / 1000); // convert to milliseconds
+}
 
 static int init_server(NameServer *ns) {
     if ((ns->sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
@@ -20,7 +27,7 @@ static int init_server(NameServer *ns) {
         logger(LOG_WARN, "bind() failed");
         return -1;
     }
-    
+
     return 0;
 }
 
@@ -58,6 +65,7 @@ int main(int argc, char const* argv[])
     // main loop, it's a blocking version for simplicity
     while (1) {
         addrlen = sizeof(cli_addr);
+        logger(LOG_DEBUG, "listen...");
         if ((ret = recvfrom(ns.sock, buf, UDP_LEN, 0,
                             (struct sockaddr *) &cli_addr, &addrlen)) < 0) {
             logger(LOG_WARN, "recvfrom() failed");
@@ -70,7 +78,7 @@ int main(int argc, char const* argv[])
         }
 
         if (decode_message(&qm, buf, ret) == 0) { // recvfrom and decode succeeded
-            interprete_qname(qm.question.qname, name, qm.question.qname_len);
+            interpret_qname(qm.question.qname, name, qm.question.qname_len);
             //printf("%s\n", name);
             if (strcmp(name, SERVER_NAME) != 0) {
                 rcode = 3;
@@ -80,6 +88,8 @@ int main(int argc, char const* argv[])
                 rcode = 0;
             }
             //printf("%s\n", answer);
+            logger(LOG_DEBUG, "answer: %s", answer);
+            write_activity_log(&ns, &cli_addr, name, answer);
             // make answer
             if (make_answer(&am, &qm, rcode, answer) < 0) {
                 continue;
@@ -120,7 +130,7 @@ int parse_argument(int argc, const char *argv[]) {
         if(i == k) continue;
         switch (j) {
         case 0: //log
-
+            init_activity_log(&ns, argv[i]);
             break;
         case 1: //ip
             inet_aton(argv[i], & ns.addr.sin_addr);
@@ -254,6 +264,32 @@ const char *get_server(char *client){
     res = (const char*) ns.nmap.nodes[ns.rr].name ;
     ns.rr = (ns.rr + 1) % ns.nmap.node_num;
     return res;
+}
+
+int init_activity_log(NameServer *ns, const char *file) {
+    ns->log = fopen(file, "w+");
+    if (NULL == ns->log) {
+        logger(LOG_ERROR, "cannot open activity log");
+        return -1;
+    }
+
+    return 0;
+}
+
+void write_activity_log(NameServer *ns,
+                        struct sockaddr_in *cli_addr,
+                        const char *qname,
+                        const char *answer) {
+    
+    fprintf(ns->log, "%lu %s %s %s\n",
+            get_timestamp_now() / 1000,
+            inet_ntoa(cli_addr->sin_addr),
+            qname,
+            answer);
+    
+    fflush(ns->log);
+
+    return;
 }
 
 

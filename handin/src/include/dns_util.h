@@ -59,7 +59,7 @@ int exam_answer(dns_message_t *qm, dns_message_t *am);
 /**
  * Interprete the question name
  */
-void interprete_qname(char *name, char *res, int len);
+void interpret_qname(char *name, char *res, int len);
 /**
  * a debugging helper
  */
