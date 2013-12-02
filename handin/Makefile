@@ -7,7 +7,7 @@ TESTBINDIR = test/bin
 
 CC 		= gcc
 #CFLAGS  = -I$(IDIR) -Wall -Werror
-CFLAGS  = -I$(IDIR) -Wall -g #-DTESTING
+CFLAGS  = -I$(IDIR) -Wall #-DTESTING
 LDFLAGS	= 
 
 _HEADERS = proxy.h logger.h run_proxy.h util.h client.h server.h mydns.h \
@@ -50,6 +50,8 @@ clean:
 	@rm -f $(BINS) $(TESTBIN) \
 		$(ODIR)/* $(SRCDIR)/*~ $(IDIR)/*~ $(SRCDIR)/*.orig $(IDIR)/*.orig  $(TESTDIR)/*.~ $(TESTDIR)/*.orig \
 		log/*
+	@rm -f $(TESTBINDIR)/$(TESTBINS)
+	@rm -f $(TESTODIR)/*
 
 test_dns: $(TEST_OBJS)
 	$(CC) -DTESTING $(CFLAGS) $(TESTODIR)/dns_util.o $(TESTODIR)/util.o $(TESTODIR)/proxy.o $(TESTODIR)/mydns.o $(TESTODIR)/logger.o -o $(TESTBINDIR)/test_dns $(LDFLAGS)

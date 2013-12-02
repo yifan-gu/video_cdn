@@ -116,8 +116,6 @@ int init_mydns(const char *dns_ip, unsigned int dns_port);
 int resolve(const char *node, const char *service, 
             const struct addrinfo *hints, struct addrinfo **res);
 
-int dns_server_info(const char *server_ip);
-
 /**
  * init the DNS message struct
  *
@@ -126,5 +124,8 @@ int dns_server_info(const char *server_ip);
  * @return 0 on success, -1 if fails
  */
 int init_question(dns_message_t *m);
+
+int dns_server_info(const char *server_ip);
+
 
 #endif // for #ifndef _MYDNS_H
