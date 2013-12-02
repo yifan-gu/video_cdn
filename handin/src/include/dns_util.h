@@ -23,7 +23,7 @@ int make_question(dns_message_t *m, const char *node);
  *
  * @return 0 on success, -1 if fails
  */
-int make_answer(dns_message_t *m, dns_message_t *q, char rcode, char *answer);
+int make_answer(dns_message_t *m, dns_message_t *q, char rcode, const char *answer);
 
 /**
  * Encode the DNS message into a UDP buffer
@@ -56,6 +56,10 @@ int decode_message(dns_message_t *m, void *buf, ssize_t len);
  */
 int exam_answer(dns_message_t *qm, dns_message_t *am);
 
+/**
+ * Interprete the question name
+ */
+void interprete_qname(char *name, char *res, int len);
 /**
  * a debugging helper
  */

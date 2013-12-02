@@ -50,17 +50,17 @@ int main(int argc, char const* argv[])
             logger(LOG_ERROR, "Failed: Init DNS");
             return -1;
         }
-        parse_addr(& proxy.toaddr, "0.0.0.0", SERVER_PORT);
         if(dns_server_info("video.cs.cmu.edu") < 0){
             logger(LOG_ERROR, "Failed: DNS query");
             return -1;
         }
+        //parse_addr(& proxy.toaddr, "0.0.0.0", SERVER_PORT);
     }
     else{
         parse_addr(& proxy.toaddr, argv[7], SERVER_PORT);
     }
 
-    return 0; // for testing DNS
+    //return 0; // for testing DNS
 
     proxy.alpha = atof(argv[2]);
     proxy.tput = proxy.avg_tput = 512;
