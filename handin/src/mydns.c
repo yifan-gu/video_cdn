@@ -105,7 +105,7 @@ int resolve(const char *node, const char *service,
             new_res = NULL;
             new_res = (struct addrinfo *)calloc(1, sizeof(struct addrinfo)
                                                 + sizeof(struct sockaddr_in));
-            if (NULL == *res) {
+            if (NULL == new_res) {
                 logger(LOG_WARN, "malloc() failed");
                 goto FAILED;
             }
@@ -134,10 +134,12 @@ int resolve(const char *node, const char *service,
 
             new_res->ai_next = NULL;
             (*res) = new_res;
+
+            return 0;
         }
     }
 
-    return 0;
+    return -1;
     
 FAILED:
     if (new_res != NULL) {
@@ -153,7 +155,7 @@ FAILED:
 }
 
 int dns_server_info(const char *server_ip) {
-    struct addrinfo *result;
+    struct addrinfo *result = NULL;
     int res;
     //int sfd;
 
@@ -172,7 +174,10 @@ int dns_server_info(const char *server_ip) {
     proxy.toaddr.sin_addr = ((struct sockaddr_in *)(result->ai_addr))->sin_addr;
 #endif
 
+    memcpy(&proxy.toaddr, result->ai_addr, sizeof(struct sockaddr_in));
+
     freeaddrinfo(result); /* No longer needed */
+    
     return 0;
 }
 
@@ -193,14 +198,16 @@ int main(int argc, char *argv[])
     //printf("myaddr %s:%d\n", inet_ntoa(proxy.myaddr.sin_addr), ntohs(proxy.myaddr.sin_port));
     parse_addr(& proxy.myaddr, "127.0.0.1", 0); // 0 -- random port
     init_mydns("127.0.0.1", 53);
-    ret = resolve("video.cmu.edu", "8080", NULL, &res);
+    ret = resolve("video.cs.cmu.edu", "8080", NULL, &res);
     printf("ret %d\n", ret);
 
-    printf("addr %s:%d\n", inet_ntoa(((struct sockaddr_in *)res->ai_addr)->sin_addr),
-           ntohs(((struct sockaddr_in *)res->ai_addr)->sin_port));
-    printf("%p %s\n", res->ai_addr, res->ai_canonname);
-
-    freeaddrinfo(res);
+    if (ret == 0) {
+        printf("addr %s:%d\n", inet_ntoa(((struct sockaddr_in *)res->ai_addr)->sin_addr),
+               ntohs(((struct sockaddr_in *)res->ai_addr)->sin_port));
+        printf("%p %s\n", res->ai_addr, res->ai_canonname);
+        
+        freeaddrinfo(res);
+    }
     
     return 0;
 }

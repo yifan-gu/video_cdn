@@ -5,6 +5,7 @@
 #include <netinet/in.h>
 #include <node_map.h>
 
+#define SERVER_NAME "video.cs.cmu.edu"
 typedef struct _NameServer {
     // round robin counter:
     // if round robin is not set, this variable will be -1;

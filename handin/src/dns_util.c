@@ -187,7 +187,7 @@ static void encode_answer(dns_message_t *m, void *buf, void *offset) {
 }
 
 int make_answer(dns_message_t *m, dns_message_t *q,
-                char rcode, char *answer) {
+                char rcode, const char *answer) {
     dns_answer_t *aptr;
     dns_question_t *qptr;
 
@@ -282,11 +282,36 @@ int exam_answer(dns_message_t *qm, dns_message_t *am) {
 
     int rcode = GETFLAG(am->header.flag, 15, 4);
     if (rcode != 0) {
-        logger(LOG_WARN, "RCODE not zero %d", rcode);
+        logger(LOG_WARN, "RCODE not zero, RCODE = %d", rcode);
         return -1;
     }
 
     return 0;
+}
+
+void interprete_qname(char *name, char *res, int len) {
+    char cnt;
+    int i, j;
+
+    i = 0;
+    while (1) {
+        cnt = name[i];
+        if (0 == cnt) {
+            i--;
+            res[i] = 0;
+            break;
+        }
+        
+        for (j = 0; j < cnt; j++) {
+            res[i+j] = name[(i+1)+j];
+        }
+        
+        res[i+j] = '.';
+        i += cnt + 1;
+        
+    }
+
+    return;
 }
 
 int dump_dns_message(dns_message_t *m) {
