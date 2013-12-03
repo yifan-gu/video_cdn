@@ -2,8 +2,7 @@
 #define _SERVER_H
 
 #define SRVBUF_SIZE 8192
-#define SPEEDUP_THRESHOLD 3
-#define TPUT_THRESHOLD 4000
+#define BETA 2
 
 enum server_st {
     SRV_ST_STLINE,

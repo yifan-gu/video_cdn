@@ -30,8 +30,7 @@ TESTBINS = test_dns
 
 # Explit build and testing targets
 all: ${BINS}
-	#./encoder.py
-	#rm $(BINS)
+
 test: ${TESTBINS}
 
 proxy: $(OBJS)

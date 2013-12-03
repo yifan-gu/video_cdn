@@ -54,7 +54,7 @@ int main(int argc, char const* argv[])
             logger(LOG_ERROR, "Failed: DNS query");
             return -1;
         }
-        logger(LOG_INFO, "server addr %s:%d\n", inet_ntoa(proxy.toaddr.sin_addr), ntohs(proxy.toaddr.sin_port));
+        logger(LOG_DEBUG, "server addr %s:%d\n", inet_ntoa(proxy.toaddr.sin_addr), ntohs(proxy.toaddr.sin_port));
     }
     else{
         parse_addr(& proxy.toaddr, argv[7], SERVER_PORT);
@@ -63,11 +63,11 @@ int main(int argc, char const* argv[])
     //return 0; // for testing DNS
 
     proxy.alpha = atof(argv[2]);
-    proxy.tput = proxy.avg_tput = 512;
+    proxy.tput = proxy.avg_tput = 1000;
 
     init_activity_log(&proxy, argv[1]);
 
-    logger(LOG_INFO, "Connecting to video server...");
+    logger(LOG_DEBUG, "Connecting to video server...");
     if( proxy_conn_server() < 0) {
         return 0;
     }
@@ -75,7 +75,7 @@ int main(int argc, char const* argv[])
     if( proxy_start_listen(argv[3]) < 0 ) {
         return -1;
     }
-    logger(LOG_INFO, "Proxy starts listening on port: %s", argv[3]);
+    logger(LOG_DEBUG, "Proxy starts listening on port: %s", argv[3]);
 
     /*if( download_bunny() < 0) {*/
         /*return -1;*/
@@ -207,7 +207,7 @@ int proxy_conn_server() {
         return -1;
     }
 
-    logger(LOG_INFO, "Connected video server successfully");
+    logger(LOG_DEBUG, "Connected video server successfully");
     return 0;
 }
 
@@ -303,17 +303,6 @@ int write_activity_log(Proxy *p) {
             p->bitrate, p->segnum, p->fragnum);
 
     fflush(p->log);
-
-    fprintf(stderr, "%lu %f %d %d %d %s %dSeg%d-Frag%d\n",
-            get_timestamp_now() / 1000,
-            (float)(1.0*p->delta/1000),
-            (int)(p->tput),
-            (int)(p->avg_tput),
-            p->bitrate,
-            inet_ntoa(p->toaddr.sin_addr),
-            p->bitrate, p->segnum, p->fragnum);
-
-    fflush(stderr);
 
     return 0;
 }

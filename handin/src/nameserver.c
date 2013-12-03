@@ -90,8 +90,8 @@ int main(int argc, char const* argv[])
                 rcode = 0;
             }
             
-            logger(LOG_INFO, "client: %s:%d, answer: %s",
-                   inet_ntoa(cli_addr.sin_addr), htons(cli_addr.sin_port), answer);
+            //logger(LOG_INFO, "client: %s:%d, answer: %s",
+            //inet_ntoa(cli_addr.sin_addr), htons(cli_addr.sin_port), answer);
             write_activity_log(&ns, &cli_addr, name, answer);
             // make answer
             if (make_answer(&am, &qm, rcode, answer) < 0) {

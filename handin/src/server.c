@@ -17,41 +17,28 @@ extern Proxy proxy;
  * update the throughput
  */
 static int update_tput(Proxy *p, int len) {
-    static unsigned long old_delta;
-    static int speedup_cnt;
+    static float old_tput;
+
+    if (0 == old_tput) {
+        old_tput = p->tput;
+    }
     
     p->delta = get_timestamp_now() - p->ts;
+    p->tput = (float)len*8 / (float)p->delta; // from milliseconds to seconds, B to KBp
+
+    if (p->tput > BETA * old_tput) {
+        p->tput = BETA * old_tput;
+    }
     
-    if (p->delta < 1) { // avoid inf and too small delta
-        p->delta = 10;
-    }
-
-    if (0 == old_delta) {
-        old_delta = p->delta;
-    }
-
     //printf("tput %f, avg_tput %f, len %d, new %ld, old %lu\n", p->tput, p->avg_tput, len, p->delta, old_delta);
     
-    if (p->delta < old_delta / 2) {
-        if (++speedup_cnt < SPEEDUP_THRESHOLD) {
-            //printf("skipping cnt: %d\n", speedup_cnt);
-            return 0; // try to avoid jitter
-        } else {
-            speedup_cnt = 0;
-            old_delta = p->delta;
-        }
-    }
-    
     // Throughput Kbps
-    p->tput = (float)len*8 / (float)p->delta; // from milliseconds to seconds, B to KBp
-    p->tput = p->tput > TPUT_THRESHOLD ? TPUT_THRESHOLD : p->tput; // avoid too high throughput
-
     p->avg_tput = p->alpha * p->tput + (1 - p->alpha) * p->avg_tput;
 
     write_activity_log(&proxy);
     proxy.client.get_chunk = 0;
 
-    old_delta = p->delta;
+    old_tput = p->tput;
     
     return 0;
 }
