@@ -65,7 +65,7 @@ int main(int argc, char const* argv[])
     // main loop, it's a blocking version for simplicity
     while (1) {
         addrlen = sizeof(cli_addr);
-        logger(LOG_DEBUG, "listen...");
+        //logger(LOG_DEBUG, "listen...");
         if ((ret = recvfrom(ns.sock, buf, UDP_LEN, 0,
                             (struct sockaddr *) &cli_addr, &addrlen)) < 0) {
             logger(LOG_WARN, "recvfrom() failed");
@@ -79,21 +79,25 @@ int main(int argc, char const* argv[])
 
         if (decode_message(&qm, buf, ret) == 0) { // recvfrom and decode succeeded
             interpret_qname(qm.question.qname, name, qm.question.qname_len);
-            //printf("%s\n", name);
+
+            //dump_dns_message(&qm);
+            //printf("interpret %s\n", name);
             if (strcmp(name, SERVER_NAME) != 0) {
                 rcode = 3;
-                answer = "";
+                answer = "0.0.0.0";
             } else {
                 answer = get_server(inet_ntoa(cli_addr.sin_addr)); // lookup
                 rcode = 0;
             }
-            //printf("%s\n", answer);
-            logger(LOG_DEBUG, "answer: %s", answer);
+            
+            logger(LOG_INFO, "client: %s:%d, answer: %s",
+                   inet_ntoa(cli_addr.sin_addr), htons(cli_addr.sin_port), answer);
             write_activity_log(&ns, &cli_addr, name, answer);
             // make answer
             if (make_answer(&am, &qm, rcode, answer) < 0) {
                 continue;
             }
+            
             //dump_dns_message(&am);
             // encode
             if ((ret = encode_message(&am, buf)) < 0) {
@@ -144,8 +148,9 @@ int parse_argument(int argc, const char *argv[]) {
             if(parse_servers(argv[i]) < 0) {
                 return -1;
             }
-            if(ns.rr != -1)
+            if(ns.rr != -1) {
                 return 0;
+            }
             break;
         case 4: // lsa
             if(parse_lsa(argv[i]) < 0) {
@@ -291,5 +296,3 @@ void write_activity_log(NameServer *ns,
 
     return;
 }
-
-

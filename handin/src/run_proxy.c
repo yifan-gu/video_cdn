@@ -5,6 +5,7 @@
 #include <sys/select.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 
 #include <proxy.h>
 #include <run_proxy.h>
@@ -23,7 +24,7 @@ void run_proxy() {
     proxy.client.fd = 0;
     init_client(&proxy.client);
     init_server(&proxy.server);
-
+    
     while(1) {
         FD_ZERO(&readfds);
         FD_SET(proxy.listenfd, &readfds);
@@ -40,7 +41,7 @@ void run_proxy() {
                    NULL, NULL, NULL );
         if(nfds > 0) {
             if(FD_ISSET(proxy.listenfd, &readfds)){
-                /*logger(LOG_DEBUG, "accept new client");*/
+                proxy.client.addrlen = sizeof(proxy.client.addr);
                 proxy.client.fd = accept(proxy.listenfd, (struct sockaddr *) &proxy.client.addr,
                                          &proxy.client.addrlen);
 
