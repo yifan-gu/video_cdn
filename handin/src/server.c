@@ -85,6 +85,8 @@ int handle_server(){
     //logger(LOG_DEBUG, "fd: %d %d %d", proxy.listenfd, s->fd, c->fd);
     if (n == 0) {
         s->closed = 1;
+        content_len = 0;
+        already_len = 0;
         return n;
     }
 
