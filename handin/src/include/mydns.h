@@ -13,11 +13,6 @@
 #define UDP_LEN 1500
 #define DNS_TIMEOUT 5
 
-enum dns_type {
-    DNS_TYPE_QUESTION,
-    DNS_TYPE_ANSWER,
-};
-
 /* both are host-endian */
 #define SETFLAG(flag, value, offset) ((flag) |= ((value) << (15 - (offset)))) 
 #define GETFLAG(flag, offset, width)  (((flag) >> (15 - (offset))) & ((1 << (width)) - 1))
@@ -71,7 +66,6 @@ typedef struct dns_answer_s {
  * Dns message struct
  */
 typedef struct dns_message_s {
-    int type;
     size_t length;
     dns_header_t header;
     dns_question_t question;

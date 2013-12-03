@@ -102,6 +102,7 @@ int resolve(const char *node, const char *service,
         if (decode_message(&am, buf, ret) == 0
             && exam_answer(&qm, &am) == 0) { // decode succeeded
 
+            //dump_dns_message(&am);
             new_res = NULL;
             new_res = (struct addrinfo *)calloc(1, sizeof(struct addrinfo)
                                                 + sizeof(struct sockaddr_in));
@@ -192,9 +193,6 @@ int main(int argc, char *argv[])
     
     //ret = make_question(&m, "video.cmu.edu");
     //printf("ret: %d\n", ret);
-    
-    //dump_dns_message(&m, DNS_TYPE_QUESTION);
-    
     //printf("myaddr %s:%d\n", inet_ntoa(proxy.myaddr.sin_addr), ntohs(proxy.myaddr.sin_port));
     parse_addr(& proxy.myaddr, "127.0.0.1", 0); // 0 -- random port
     init_mydns("127.0.0.1", 53);

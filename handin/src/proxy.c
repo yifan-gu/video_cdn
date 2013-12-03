@@ -55,7 +55,6 @@ int main(int argc, char const* argv[])
             return -1;
         }
         logger(LOG_DEBUG, "server addr %s:%d\n", inet_ntoa(proxy.toaddr.sin_addr), ntohs(proxy.toaddr.sin_port));
-        //parse_addr(& proxy.toaddr, "0.0.0.0", SERVER_PORT);
     }
     else{
         parse_addr(& proxy.toaddr, argv[7], SERVER_PORT);
@@ -64,11 +63,11 @@ int main(int argc, char const* argv[])
     //return 0; // for testing DNS
 
     proxy.alpha = atof(argv[2]);
-    proxy.tput = proxy.avg_tput = 512;
+    proxy.tput = proxy.avg_tput = 1000;
 
     init_activity_log(&proxy, argv[1]);
 
-    logger(LOG_INFO, "Connecting to video server...");
+    logger(LOG_DEBUG, "Connecting to video server...");
     if( proxy_conn_server() < 0) {
         return 0;
     }
@@ -76,7 +75,7 @@ int main(int argc, char const* argv[])
     if( proxy_start_listen(argv[3]) < 0 ) {
         return -1;
     }
-    logger(LOG_INFO, "Proxy starts listening on port: %s", argv[3]);
+    logger(LOG_DEBUG, "Proxy starts listening on port: %s", argv[3]);
 
     /*if( download_bunny() < 0) {*/
         /*return -1;*/
@@ -208,12 +207,11 @@ int proxy_conn_server() {
         return -1;
     }
 
-    logger(LOG_INFO, "Connected video server successfully");
+    logger(LOG_DEBUG, "Connected video server successfully");
     return 0;
 }
 
 int proxy_reconnect_server(){
-
     proxy.server.fd = socket(AF_INET, SOCK_STREAM, 0);
     if( bind(proxy.server.fd, (struct sockaddr *)(&proxy.myaddr), sizeof(proxy.myaddr)) < 0) {
         logger(LOG_ERROR, "Failed: reconnect can't bind to local addr");
@@ -301,7 +299,7 @@ int write_activity_log(Proxy *p) {
             (int)(p->tput),
             (int)(p->avg_tput),
             p->bitrate,
-            inet_ntoa(p->client.addr.sin_addr),
+            inet_ntoa(p->toaddr.sin_addr),
             p->bitrate, p->segnum, p->fragnum);
 
     fflush(p->log);
